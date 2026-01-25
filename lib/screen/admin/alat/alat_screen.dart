@@ -1,0 +1,235 @@
+import 'package:flutter/material.dart';
+import 'package:brantaspinjam/widgets/card_alat.dart';
+import 'package:brantaspinjam/screen/admin/alat/alat_add_edit.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:brantaspinjam/services/alat_service.dart';
+import 'package:brantaspinjam/services/kategori_service.dart';
+
+class AlatScreen extends StatefulWidget {
+  const AlatScreen({super.key});
+
+  @override
+  State<AlatScreen> createState() => _AlatScreenState();
+}
+
+class _AlatScreenState extends State<AlatScreen> {
+  String searchQuery = "";
+  String selectedCategory = "Semua";
+
+  late AlatService alatService;
+  final List<Map<String, dynamic>> alatList = [];
+
+  late KategoriService kategoriService;
+
+  List<Map<String, dynamic>> kategoriList = [];
+  List<String> kategoriNames = ["Semua"];
+  Map<int, String> kategoriMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+    alatService = AlatService(Supabase.instance.client);
+    kategoriService = KategoriService(Supabase.instance.client);
+
+    loadKategori();
+    loadAlat();
+  }
+
+  // Load kategori 
+  Future<void> loadKategori() async {
+    try {
+      final data = await kategoriService.getKategori();
+      setState(() {
+        kategoriList = data;
+        kategoriMap = {
+          for (var k in data) k["id_kategori"]: k["nama_kategori"],
+        };
+        kategoriNames = ["Semua", ...data.map((k) => k["nama_kategori"])];
+      });
+    } catch (e) {
+      print("Error load kategori: $e");
+    }
+  }
+
+  // Load data 
+  Future<void> loadAlat() async {
+    try {
+      final data = await alatService.getAlat();
+      setState(() {
+        alatList.clear();
+        alatList.addAll(
+          data.map(
+            (e) => {
+              "id": e["id_alat"],
+              "nama": e["nama_alat"],
+              "kategori": getKategoriName(e["id_kategori"]),
+              "stok": e["stok"],
+              "gambar": e["gambar"] ?? "",
+            },
+          ),
+        );
+      });
+    } catch (e) {
+      print("Error load alat: $e");
+    }
+  }
+
+  // Map kategori
+  String getKategoriName(int idKategori) {
+    return kategoriMap[idKategori] ?? "Lainnya";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = alatList.where((a) {
+      final namaMatch = a["nama"].toString().toLowerCase().contains(
+        searchQuery.toLowerCase(),
+      );
+      final kategoriMatch =
+          selectedCategory == "Semua" || a["kategori"] == selectedCategory;
+      return namaMatch && kategoriMatch;
+    }).toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // SEARCH
+              Expanded(
+                child: Container(
+                  height: 70,
+                  width: 304,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E1DA),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: const Color(0xFFBABABA),
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.search,
+                        size: 24,
+                        color: Color(0xFF630E2B),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: "Cari alat",
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              searchQuery = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // ADD
+              GestureDetector(
+                onTap: () async {
+                  final result = await showDialog(
+                    context: context,
+                    builder: (_) => const AlatAddEdit(),
+                  );
+                  if (result == true) loadAlat(); // refresh data
+                },
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB3C8CF),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: const Icon(Icons.add, color: Colors.white, size: 28),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          //KATEGORI
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: kategoriNames.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) {
+                final c = kategoriNames[i];
+                final selected = selectedCategory == c;
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedCategory = c;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? const Color(0xFF4B4376)
+                          : const Color(0xFFDBDFEA),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      c,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: selected
+                            ? Colors.white
+                            : const Color(0xFF4B4376),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          Expanded(
+            child: GridView.builder(
+              itemCount: filtered.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisExtent: 225,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 18,
+              ),
+              itemBuilder: (_, i) {
+                final alat = filtered[i];
+                return AlatCard(
+                  nama: alat["nama"],
+                  kategori: alat["kategori"],
+                  stok: alat["stok"],
+                  gambar: alat["gambar"],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
