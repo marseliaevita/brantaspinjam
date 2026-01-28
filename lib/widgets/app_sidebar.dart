@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:brantaspinjam/shared/enums.dart';
 
 class AppSidebar extends StatelessWidget {
-  final String role;
+  final UserRole role;
   final String activeMenu;
   final Function(String) onMenuTap;
 
@@ -12,9 +13,9 @@ class AppSidebar extends StatelessWidget {
     required this.onMenuTap,
   });
 
-  static List<Map<String, dynamic>> getMenusByRoleStatic(String role) {
+  static List<Map<String, dynamic>> getMenusByRoleStatic(UserRole role) {
     switch (role) {
-      case 'admin':
+      case UserRole.admin:
         return [
           _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
           _menu(Icons.people_rounded, 'Pengguna', 'user'),
@@ -25,22 +26,20 @@ class AppSidebar extends StatelessWidget {
           _menu(Icons.receipt_long_rounded, 'Log Aktivitas', 'log'),
           _menu(Icons.logout_rounded, 'Logout', 'logout'),
         ];
-      case 'petugas':
+      case UserRole.petugas:
         return [
           _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
           _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
           _menu(Icons.assignment_return_rounded, 'Pengembalian', 'pengembalian'),
           _menu(Icons.logout_rounded, 'Logout', 'logout'),
         ];
-      case 'peminjam':
+      case UserRole.peminjam:
         return [
           _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
           _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
           _menu(Icons.list_alt_rounded, 'Pinjaman Saya', 'pinjaman_saya'),
           _menu(Icons.logout_rounded, 'Logout', 'logout'),
         ];
-      default:
-        return [];
     }
   }
 
@@ -57,8 +56,9 @@ class AppSidebar extends StatelessWidget {
   }
 
   String getInitial() {
-    return role.isNotEmpty ? role[0].toUpperCase() : 'U';
-  }
+  return role.name[0].toUpperCase();
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -113,12 +113,13 @@ class AppSidebar extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          role,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color.fromRGBO(255, 255, 255, 0.84),
-                          ),
-                        ),
+  role.name.toUpperCase(),
+  style: const TextStyle(
+    fontSize: 12,
+    color: Color.fromRGBO(255, 255, 255, 0.84),
+  ),
+),
+
                       ],
                     )
                   ],

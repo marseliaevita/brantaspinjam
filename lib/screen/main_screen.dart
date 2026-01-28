@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:brantaspinjam/shared/enums.dart';
 import 'package:brantaspinjam/widgets/app_sidebar.dart';
 import 'package:brantaspinjam/screen/admin/alat/alat_screen.dart';
 import 'package:brantaspinjam/screen/admin/kategori/kategori_screen.dart';
@@ -10,6 +11,7 @@ import 'package:brantaspinjam/screen/petugas/peminjaman_screen.dart';
 import 'package:brantaspinjam/screen/petugas/pengembalian_screen.dart';
 import 'package:brantaspinjam/screen/peminjam/peminjaman_list_screen.dart';
 import 'package:brantaspinjam/screen/peminjam/pinjam_alat_screen.dart';
+import 'package:brantaspinjam/screen/admin/log_aktivitas.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,9 +21,10 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-//String role = 'petugas';
-String role = 'admin';
-//String role = 'peminjam';
+//UserRole role = UserRole.admin;
+//UserRole role = UserRole.petugas;
+ UserRole role = UserRole.peminjam;
+
 
   String activeMenu = 'dashboard';
 
@@ -55,14 +58,14 @@ String role = 'admin';
  Widget getActiveScreen() {
   switch (activeMenu) {
     case 'dashboard':
-      return const DashboardScreen();
+  return DashboardScreen(role: role);
 
     case 'user':
       return const UserScreen();
 
     case 'peminjaman':
-      if (role == 'admin') return const PeminjamanAdminScreen();
-      if (role == 'petugas') return const PeminjamanPetugasScreen();
+      if (role == UserRole.admin) return const PeminjamanAdminScreen();
+      if (role == UserRole.petugas) return const PeminjamanPetugasScreen();
       return const PinjamAlatScreen();
 
     case 'pengembalian':
@@ -81,10 +84,10 @@ String role = 'admin';
       return const DendaScreen();
 
     case 'log':
-      return const Center(child: Text('Log Aktivitas'));
+      return const LogAktivitasScreen();
 
     default:
-      return const DashboardScreen();
+      return DashboardScreen(role: role);
   }
 }
 

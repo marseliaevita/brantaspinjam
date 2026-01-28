@@ -1,3 +1,9 @@
+enum UserRole {
+  admin,
+  petugas,
+  peminjam,
+}
+
 enum PeminjamanStatus {
   pengajuan,
   dipinjam,
