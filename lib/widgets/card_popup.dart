@@ -115,7 +115,7 @@ Widget _popupButton({
 }
 
 
-//DELETE/DISABLE
+//POPUP TEXT BUTTON
 class ConfirmActionPopup extends StatelessWidget {
   final String title;
   final String message;

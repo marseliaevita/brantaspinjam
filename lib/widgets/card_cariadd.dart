@@ -4,24 +4,26 @@ import 'package:flutter/material.dart';
 class SearchCard extends StatelessWidget {
   final Function(String) onChanged;
   final String hint;
+  final double? width;
 
   const SearchCard({
     super.key,
     required this.onChanged,
     this.hint = "Cari data",
+    this.width,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 395,
+      width: width, 
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFE5E1DA),
+        color: const Color(0xFF8294C4).withOpacity(0.2),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: const Color(0xFFBABABA),
+          color: const Color(0xFF8294C4),
           width: 2,
         ),
       ),
@@ -30,16 +32,23 @@ class SearchCard extends StatelessWidget {
           const Icon(
             Icons.search,
             size: 24,
-            color: Color(0xFF630E2B),
+            color: Color(0xFF4B4376),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
+              onChanged: onChanged,
+              style: const TextStyle(
+                color: Color(0xFF4B4376), 
+                fontSize: 16,
+              ),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: hint,
+                hintStyle: const TextStyle(
+                  color: Color(0xFF4B4376),
+                ),
               ),
-              onChanged: onChanged,
             ),
           ),
         ],

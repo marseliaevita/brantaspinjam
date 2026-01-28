@@ -4,6 +4,12 @@ import 'package:brantaspinjam/screen/admin/alat/alat_screen.dart';
 import 'package:brantaspinjam/screen/admin/kategori/kategori_screen.dart';
 import 'package:brantaspinjam/screen/admin/denda/denda_screen.dart';
 import 'package:brantaspinjam/screen/admin/user/user_screen.dart';
+import 'package:brantaspinjam/screen/admin/peminjaman/peminjaman_screen.dart';
+import 'package:brantaspinjam/screen/dashboard/dashboard_screen.dart';
+import 'package:brantaspinjam/screen/petugas/peminjaman_screen.dart';
+import 'package:brantaspinjam/screen/petugas/pengembalian_screen.dart';
+import 'package:brantaspinjam/screen/peminjam/peminjaman_list_screen.dart';
+import 'package:brantaspinjam/screen/peminjam/pinjam_alat_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,66 +19,91 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  String activeMenu = "dashboard";
+//String role = 'petugas';
+String role = 'admin';
+//String role = 'peminjam';
 
+  String activeMenu = 'dashboard';
+
+  // APP BAR TITLE
   String getAppBarTitle() {
     switch (activeMenu) {
-      case "dashboard":
-        return "Dashboard";
-      case "user":
-        return "Pengguna";
-      case "alat":
-        return "Alat";
-      case "kategori":
-        return "Kategori";
-      case "denda":
-        return "Denda";
-      case "log":
-        return "Log Aktivitas";
+      case 'dashboard':
+        return 'Dashboard';
+      case 'user':
+        return 'Pengguna';
+     case 'peminjaman':
+        return 'Peminjaman';
+      case 'pengembalian':
+        return 'Pengembalian';
+      case 'pinjaman_saya':
+        return 'Pinjaman Saya';
+      case 'alat':
+        return 'Alat';
+      case 'kategori':
+        return 'Kategori';
+      case 'denda':
+        return 'Denda';
+      case 'log':
+        return 'Log Aktivitas';
       default:
-        return "Dashboard";
+        return 'Dashboard';
     }
   }
 
-  Widget getActiveScreen() {
-    switch (activeMenu) {
-      case "alat":
-        return const AlatScreen();
+  // ACTIVE SCREEN
+ Widget getActiveScreen() {
+  switch (activeMenu) {
+    case 'dashboard':
+      return const DashboardScreen();
 
-      case "dashboard":
-        return const Center(child: Text("Dashboard"));
+    case 'user':
+      return const UserScreen();
 
-      case "user":
-        return const UserScreen();
+    case 'peminjaman':
+      if (role == 'admin') return const PeminjamanAdminScreen();
+      if (role == 'petugas') return const PeminjamanPetugasScreen();
+      return const PinjamAlatScreen();
 
-      case "kategori":
-        return const KategoriScreen();
+    case 'pengembalian':
+      return const PengembalianPetugasScreen();
 
-      case "denda":
-        return const DendaScreen();
+    case 'pinjaman_saya':
+      return const PeminjamanListScreen();
 
-      case "log":
-        return const Center(child: Text("Log Aktivitas"));
+    case 'alat':
+      return const AlatScreen();
 
-      default:
-        return const Center(child: Text("Dashboard"));
-    }
+    case 'kategori':
+      return const KategoriScreen();
+
+    case 'denda':
+      return const DendaScreen();
+
+    case 'log':
+      return const Center(child: Text('Log Aktivitas'));
+
+    default:
+      return const DashboardScreen();
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FB),
       drawer: AppSidebar(
+        role: role, 
         activeMenu: activeMenu,
         onMenuTap: (menu) {
-          if (menu == "logout") {
+          if (menu == 'logout') {
             Navigator.pop(context);
             return;
           }
 
           setState(() => activeMenu = menu);
-          Navigator.pop(context); 
+          Navigator.pop(context);
         },
       ),
       appBar: PreferredSize(

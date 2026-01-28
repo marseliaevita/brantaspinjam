@@ -82,7 +82,7 @@ class _DendaScreenState extends State<DendaScreen> {
                               message: "Anda yakin menghapus data denda ini?",
                               confirmText: "Hapus",
                               onConfirm: () {
-                                // delete denda
+                              
                               },
                             ),
                           );

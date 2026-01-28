@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       backgroundColor: const Color(0xFF3F9AAE),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                    onPressed: _isLoading ? null : _login, // <-- ganti fungsi login
+                    onPressed: _isLoading ? null : _login, 
                     child: const Text(
                       "Masuk",
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),

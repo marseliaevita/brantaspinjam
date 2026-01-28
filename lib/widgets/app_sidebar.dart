@@ -1,73 +1,70 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:brantaspinjam/services/supabase_config.dart';
 
-class AppSidebar extends StatefulWidget {
+class AppSidebar extends StatelessWidget {
+  final String role;
   final String activeMenu;
   final Function(String) onMenuTap;
 
   const AppSidebar({
     super.key,
+    required this.role,
     required this.activeMenu,
     required this.onMenuTap,
   });
 
-  @override
-  State<AppSidebar> createState() => _AppSidebarState();
-}
-
-class _AppSidebarState extends State<AppSidebar> {
-  final SupabaseClient _client = SupabaseConfig.client;
-
-  String name = '';
-  String role = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserProfile();
-  }
-
-Future<void> _loadUserProfile() async {
-  try {
-    final user = _client.auth.currentUser;
-    if (user == null) return;
-
-    
-    final List<dynamic> result = await _client
-        .from('users')
-        .select('name, role')
-        .eq('user_id', user.id)
-        .limit(1);
-
-    if (result.isNotEmpty) {
-      final data = result.first as Map<String, dynamic>;
-      setState(() {
-        name = data['name'] ?? '';
-        role = data['role'] ?? '';
-      });
-    } else {
-      setState(() {
-        name = '';
-        role = '';
-      });
+  static List<Map<String, dynamic>> getMenusByRoleStatic(String role) {
+    switch (role) {
+      case 'admin':
+        return [
+          _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
+          _menu(Icons.people_rounded, 'Pengguna', 'user'),
+          _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
+          _menu(Icons.inventory_2_rounded, 'Alat', 'alat'),
+          _menu(Icons.category_rounded, 'Kategori', 'kategori'),
+          _menu(Icons.payments_rounded, 'Denda', 'denda'),
+          _menu(Icons.receipt_long_rounded, 'Log Aktivitas', 'log'),
+          _menu(Icons.logout_rounded, 'Logout', 'logout'),
+        ];
+      case 'petugas':
+        return [
+          _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
+          _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
+          _menu(Icons.assignment_return_rounded, 'Pengembalian', 'pengembalian'),
+          _menu(Icons.logout_rounded, 'Logout', 'logout'),
+        ];
+      case 'peminjam':
+        return [
+          _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
+          _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
+          _menu(Icons.list_alt_rounded, 'Pinjaman Saya', 'pinjaman_saya'),
+          _menu(Icons.logout_rounded, 'Logout', 'logout'),
+        ];
+      default:
+        return [];
     }
-  } catch (e) {
-    print('Error load user profile: $e');
-    setState(() {
-      name = '';
-      role = '';
-    });
   }
-}
 
+  static Map<String, dynamic> _menu(
+    IconData icon,
+    String title,
+    String key,
+  ) {
+    return {
+      'icon': icon,
+      'title': title,
+      'key': key,
+    };
+  }
 
   String getInitial() {
-    if (name.isEmpty) return 'U';
-    return name[0].toUpperCase();
+    return role.isNotEmpty ? role[0].toUpperCase() : 'U';
   }
+
   @override
   Widget build(BuildContext context) {
+    final menus = AppSidebar.getMenusByRoleStatic(role);
+
+
     return Drawer(
       width: 260,
       child: Container(
@@ -76,7 +73,7 @@ Future<void> _loadUserProfile() async {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // PROFILE
+              // PROFILE 
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -85,7 +82,6 @@ Future<void> _loadUserProfile() async {
                 ),
                 child: Row(
                   children: [
-                    // avatar
                     Container(
                       width: 46,
                       height: 46,
@@ -107,9 +103,9 @@ Future<void> _loadUserProfile() async {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          name.isEmpty ? 'Loading...' : name,
-                          style: const TextStyle(
+                        const Text(
+                          'Dummy User',
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             fontSize: 14,
@@ -131,41 +127,13 @@ Future<void> _loadUserProfile() async {
 
               const SizedBox(height: 20),
 
-              // MENU
-              _menuItem(
-                icon: Icons.dashboard_rounded,
-                title: "Dashboard",
-                menuKey: "dashboard",
-              ),
-              _menuItem(
-                icon: Icons.people_rounded,
-                title: "Pengguna",
-                menuKey: "user",
-              ),
-              _menuItem(
-                icon: Icons.inventory_2_rounded,
-                title: "Alat",
-                menuKey: "alat",
-              ),
-              _menuItem(
-                icon: Icons.category_rounded,
-                title: "Kategori",
-                menuKey: "kategori",
-              ),
-              _menuItem(
-                icon: Icons.payments_rounded,
-                title: "Denda",
-                menuKey: "denda",
-              ),
-              _menuItem(
-                icon: Icons.receipt_long_rounded,
-                title: "Log Aktivitas",
-                menuKey: "log",
-              ),
-              _menuItem(
-                icon: Icons.logout_rounded,
-                title: "Logout",
-                menuKey: "logout",
+              // MENU 
+              ...menus.map(
+                (menu) => _menuItem(
+                  icon: menu['icon'],
+                  title: menu['title'],
+                  menuKey: menu['key'],
+                ),
               ),
             ],
           ),
@@ -174,15 +142,16 @@ Future<void> _loadUserProfile() async {
     );
   }
 
+  // MENU ITEM 
   Widget _menuItem({
     required IconData icon,
     required String title,
     required String menuKey,
   }) {
-    final bool isActive = widget.activeMenu == menuKey;
+    final bool isActive = activeMenu == menuKey;
 
     return GestureDetector(
-      onTap: () => widget.onMenuTap(menuKey),
+      onTap: () => onMenuTap(menuKey),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
