@@ -30,7 +30,11 @@ class AppSidebar extends StatelessWidget {
         return [
           _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
           _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
-          _menu(Icons.assignment_return_rounded, 'Pengembalian', 'pengembalian'),
+          _menu(
+            Icons.assignment_return_rounded,
+            'Pengembalian',
+            'pengembalian',
+          ),
           _menu(Icons.logout_rounded, 'Logout', 'logout'),
         ];
       case UserRole.peminjam:
@@ -43,27 +47,17 @@ class AppSidebar extends StatelessWidget {
     }
   }
 
-  static Map<String, dynamic> _menu(
-    IconData icon,
-    String title,
-    String key,
-  ) {
-    return {
-      'icon': icon,
-      'title': title,
-      'key': key,
-    };
+  static Map<String, dynamic> _menu(IconData icon, String title, String key) {
+    return {'icon': icon, 'title': title, 'key': key};
   }
 
   String getInitial() {
-  return role.name[0].toUpperCase();
-}
-
+    return role.name[0].toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
     final menus = AppSidebar.getMenusByRoleStatic(role);
-
 
     return Drawer(
       width: 260,
@@ -73,7 +67,7 @@ class AppSidebar extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // PROFILE 
+              // PROFILE
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -113,22 +107,21 @@ class AppSidebar extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-  role.name.toUpperCase(),
-  style: const TextStyle(
-    fontSize: 12,
-    color: Color.fromRGBO(255, 255, 255, 0.84),
-  ),
-),
-
+                          role.name.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color.fromRGBO(255, 255, 255, 0.84),
+                          ),
+                        ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              // MENU 
+              // MENU
               ...menus.map(
                 (menu) => _menuItem(
                   icon: menu['icon'],
@@ -143,7 +136,7 @@ class AppSidebar extends StatelessWidget {
     );
   }
 
-  // MENU ITEM 
+  // MENU ITEM
   Widget _menuItem({
     required IconData icon,
     required String title,
@@ -152,7 +145,9 @@ class AppSidebar extends StatelessWidget {
     final bool isActive = activeMenu == menuKey;
 
     return GestureDetector(
-      onTap: () => onMenuTap(menuKey),
+      onTap: () {
+      onMenuTap(menuKey); 
+    },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:brantaspinjam/services/denda_service.dart';
 import 'package:brantaspinjam/widgets/card_popup.dart';
 
 class DendaAddEdit extends StatefulWidget {
@@ -16,14 +18,18 @@ class _DendaAddEditState extends State<DendaAddEdit> {
 
   bool get isEdit => widget.denda != null;
 
-  @override
-  void initState() {
-    super.initState();
-    namaController =
-        TextEditingController(text: widget.denda?['nama'] ?? '');
-    nominalController =
-        TextEditingController(text: widget.denda?['nominal']?.toString() ?? '');
-  }
+  late DendaService dendaService;
+
+@override
+void initState() {
+  super.initState();
+  namaController = TextEditingController(text: widget.denda?['nama'] ?? '');
+  nominalController = TextEditingController(
+      text: widget.denda?['nominal']?.toString() ?? '');
+  
+  dendaService = DendaService(Supabase.instance.client); 
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +39,33 @@ class _DendaAddEditState extends State<DendaAddEdit> {
       height: 350,
       submitText: isEdit ? 'Update' : 'Simpan',
       onCancel: () => Navigator.pop(context),
-      onSubmit: () {
-        final nama = namaController.text.trim();
-        final nominal = nominalController.text.trim();
+      onSubmit: () async {
+  final nama = namaController.text.trim();
+  final nominalText = nominalController.text.trim();
+  if (nama.isEmpty || nominalText.isEmpty) return;
 
-        if (nama.isEmpty || nominal.isEmpty) return;
+  final nominal = double.tryParse(nominalText);
+  if (nominal == null) return;
 
-       Navigator.pop(context);
-      },
+  try {
+    if (isEdit) {
+      await dendaService.updateDenda(
+        idDenda: widget.denda!['id_denda'],
+        jenisDenda: nama,
+        tarif: nominal,
+      );
+    } else {
+      await dendaService.addDenda(jenisDenda: nama, tarif: nominal);
+    }
+    if (!mounted) return;
+    Navigator.pop(context, true);
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Gagal menyimpan denda: $e')),
+    );
+  }
+},
       content: Padding(
         padding: const EdgeInsets.only(left: 16),
         child: Column(

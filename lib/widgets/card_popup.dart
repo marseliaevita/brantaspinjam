@@ -139,9 +139,9 @@ class ConfirmActionPopup extends StatelessWidget {
       submitText: confirmText,
       onCancel: () => Navigator.pop(context),
       onSubmit: () {
-        onConfirm();
-        Navigator.pop(context);
+        onConfirm(); 
       },
+
       content: Padding(
         padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
         child: Text(

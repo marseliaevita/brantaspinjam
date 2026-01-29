@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:brantaspinjam/services/supabase_config.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:brantaspinjam/screen/login/splash_screen.dart';
+import 'package:brantaspinjam/screen/login/login_screen.dart';
+import 'package:brantaspinjam/screen/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +43,12 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      home: SplashScreen()
+      home: const SplashScreen(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/main': (context) => const MainScreen(),
+      },
+    
     );
   }
 }

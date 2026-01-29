@@ -25,7 +25,7 @@ class AlatService {
   
   Future<String> uploadGambar(Uint8List bytes, String fileName) async {
     try {
-      final bucket = supabase.storage.from('images');
+      final bucket = supabase.storage.from('alat');
       await bucket.uploadBinary(
         fileName,
         bytes,
@@ -84,11 +84,33 @@ class AlatService {
   }
 
   // Hapus alat
-  Future<void> deleteAlat(int idAlat) async {
-    try {
-      await supabase.from('alat').delete().eq('id_alat', idAlat);
-    } catch (e) {
-      throw Exception('Gagal menghapus alat: $e');
+ Future<void> deleteAlat({
+  required int idAlat,
+  String? gambarUrl,
+}) async {
+  try {
+    if (gambarUrl != null && gambarUrl.isNotEmpty) {
+      final uri = Uri.parse(gambarUrl);
+      final path = uri.pathSegments.last;
+
+      await supabase.storage.from('alat').remove([path]);
     }
+
+    await supabase.from('alat').delete().eq('id_alat', idAlat);
+  } catch (e) {
+    throw Exception('Gagal menghapus alat: $e');
   }
+}
+
+Future<bool> isAlatDipakai(int idAlat) async {
+  final data = await supabase
+      .from('peminjaman')
+      .select('id_peminjaman')
+      .eq('id_alat', idAlat)
+      .limit(1);
+
+  return (data as List).isNotEmpty;
+}
+
+
 }

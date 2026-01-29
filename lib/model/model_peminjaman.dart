@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:brantaspinjam/shared/enums.dart';
 
 class PeminjamanModel {
@@ -26,7 +27,6 @@ class PeminjamanModel {
     this.dendaKerusakan,
   });
 
-
   /// STATUS CHECK
   bool get isPengajuan => status == PeminjamanStatus.pengajuan;
   bool get isDipinjam => status == PeminjamanStatus.dipinjam;
@@ -34,61 +34,43 @@ class PeminjamanModel {
   bool get isSelesai => status == PeminjamanStatus.selesai;
   bool get isDitolak => status == PeminjamanStatus.ditolak;
 
-
-  /// UI VISIBILITY RULE
-  bool get showTanggalDikembalikan =>
-      isDikembalikan || isSelesai;
-
+  bool get showTanggalDikembalikan => isDikembalikan || isSelesai;
   bool get showKondisi => isSelesai;
-
   bool get showDenda => isSelesai;
- 
 
-  /// VALIDATION RULE
-  bool get isTanggalDikembalikanValid {
-    if (!showTanggalDikembalikan) return true;
-    return tanggalDikembalikan != null;
-  }
-
-  bool get isDendaValid {
-    if (!showDenda) return true;
-    return (dendaTerlambatHari ?? 0) >= 0;
-  }
-
- 
-  /// MAPPING DB
+  /// DUMMY MAPPING
   factory PeminjamanModel.fromMap(Map<String, dynamic> map) {
     return PeminjamanModel(
-      nama: map['nama'],
-      alat: map['alat'],
+      nama: "User ${map['user_id'].toString().substring(0,5)}",
+      alat: "Alat ${map['id_alat']}",
       tanggalPinjam: DateTime.parse(map['tanggal_pinjam']),
-      tanggalBatas: DateTime.parse(map['tanggal_batas']),
-      tanggalDikembalikan: map['tanggal_dikembalikan'] != null
-          ? DateTime.parse(map['tanggal_dikembalikan'])
-          : null,
+      tanggalBatas: DateTime.parse(map['tanggal_kembali']),
+      tanggalDikembalikan: null,
       status: PeminjamanStatus.values.firstWhere(
-        (e) => e.name == map['status'],
+        (e) => e.name == map['status_peminjaman'],
         orElse: () => PeminjamanStatus.pengajuan,
       ),
-      kondisi: map['kondisi'],
-      dendaTerlambatHari: map['denda_terlambat'],
-      dendaKerusakan: map['denda_kerusakan'] != null
-          ? List<String>.from(map['denda_kerusakan'])
-          : null,
+      kondisi: "Baik",
+      dendaTerlambatHari: 0,
+      dendaKerusakan: [],
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMapForDB({
+    required String userId,
+    required int alatId,
+  }) {
     return {
-      'nama': nama,
-      'alat': alat,
+      'user_id': userId,
+      'id_alat': alatId,
       'tanggal_pinjam': tanggalPinjam.toIso8601String(),
-      'tanggal_batas': tanggalBatas.toIso8601String(),
+      'tanggal_kembali': tanggalBatas.toIso8601String(),
       'tanggal_dikembalikan': tanggalDikembalikan?.toIso8601String(),
-      'status': status.name,
+      'status_peminjaman': status.name,
       'kondisi': kondisi,
       'denda_terlambat': dendaTerlambatHari,
-      'denda_kerusakan': dendaKerusakan,
+      'denda_kerusakan':
+          dendaKerusakan != null ? jsonEncode(dendaKerusakan) : null,
     };
   }
 }

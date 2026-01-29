@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:brantaspinjam/shared/enums.dart';
 import 'package:brantaspinjam/widgets/app_sidebar.dart';
+import 'package:brantaspinjam/services/auth_service.dart';
+import 'package:brantaspinjam/widgets/card_popup.dart';
 import 'package:brantaspinjam/screen/admin/alat/alat_screen.dart';
 import 'package:brantaspinjam/screen/admin/kategori/kategori_screen.dart';
 import 'package:brantaspinjam/screen/admin/denda/denda_screen.dart';
@@ -21,9 +23,9 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-//UserRole role = UserRole.admin;
+UserRole role = UserRole.admin;
 //UserRole role = UserRole.petugas;
- UserRole role = UserRole.peminjam;
+//UserRole role = UserRole.peminjam;
 
 
   String activeMenu = 'dashboard';
@@ -100,10 +102,24 @@ class _MainScreenState extends State<MainScreen> {
         role: role, 
         activeMenu: activeMenu,
         onMenuTap: (menu) {
-          if (menu == 'logout') {
+          if (menu == 'logout') {showDialog(
+        context: context,
+        builder: (context) => ConfirmActionPopup(
+          title: 'Konfirmasi Logout',
+          message: 'Apakah Anda yakin ingin keluar?',
+          confirmText: 'Logout',
+          onConfirm: () async {
+            // Tutup popup
             Navigator.pop(context);
-            return;
-          }
+            // Lakukan logout
+            await AuthService().signOut();
+            // Kembali ke halaman login
+            Navigator.pushReplacementNamed(context, '/login');
+          },
+        ),
+      );
+      return;
+    }
 
           setState(() => activeMenu = menu);
           Navigator.pop(context);

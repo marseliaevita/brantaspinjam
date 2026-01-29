@@ -1,113 +1,126 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:brantaspinjam/services/alat_service.dart';
 import 'package:brantaspinjam/widgets/card_popup.dart';
-import 'package:brantaspinjam/screen/admin/alat/alat_add_edit.dart';
 
 class AlatCard extends StatelessWidget {
+  final int idAlat;
+  final int idKategori;
   final String nama;
   final String kategori;
   final int stok;
   final String gambar;
+  final VoidCallback onEdit;
+  final VoidCallback onDeleted;
+
 
   const AlatCard({
     super.key,
+    required this.idAlat,
+    required this.idKategori,
     required this.nama,
     required this.kategori,
     required this.stok,
     required this.gambar,
+    required this.onEdit,
+    required this.onDeleted,
   });
 
   bool get isLow => stok <= 3;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 187,
-      height: 232,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFDBDFEA),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// MENU
-            Align(
-              alignment: Alignment.topRight,
-              child: _MenuButton(
-                alat: {
-                  "nama": nama,
-                  "kategori": kategori,
-                  "stok": stok,
-                  "status": stok <= 3 ? "Low" : "Ready",
-                  "gambar": gambar,
-                },
-              ),
-            ),
-
-            const SizedBox(height: 3),
-
-            /// GAMBAR
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Image.network(
-                  gambar,
-                  width: 88,
-                  height: 88,
-                  fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: onEdit,
+      child: SizedBox(
+        width: 187,
+        height: 232,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFDBDFEA),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// MENU
+              Align(
+                alignment: Alignment.topRight,
+                child: _MenuButton(
+                  idAlat: idAlat,
+                  idKategori: idKategori,
+                  nama: nama,
+                  stok: stok,
+                  gambar: gambar,
+                  onEdit: onEdit,
+                  onDeleted: onDeleted, 
                 ),
               ),
-            ),
 
-            const SizedBox(height: 6),
+              const SizedBox(height: 3),
 
-            /// NAMA
-            Text(
-              nama,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                height: 1.1,
-                color: Color(0xFF0E0A26),
-              ),
-            ),
-
-            const SizedBox(height: 5),
-
-            /// KATEGORI
-            Text(
-              kategori,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w300,
-                height: 1.1,
-                color: Color(0xFF4B4376),
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            /// BADGE + STOK
-            Row(
-              children: [
-                _StockBadge(stok: stok),
-                const Spacer(),
-                Text(
-                  "Stok $stok",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF0E0A26),
+              /// GAMBAR
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Image.network(
+                    gambar,
+                    width: 88,
+                    height: 88,
+                    fit: BoxFit.cover,
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+
+              const SizedBox(height: 6),
+
+              /// NAMA
+              Text(
+                nama,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  height: 1.1,
+                  color: Color(0xFF0E0A26),
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              /// KATEGORI
+              Text(
+                kategori,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w300,
+                  height: 1.1,
+                  color: Color(0xFF4B4376),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              /// BADGE + STOK
+              Row(
+                children: [
+                  _StockBadge(stok: stok),
+                  const Spacer(),
+                  Text(
+                    "Stok $stok",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF0E0A26),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -116,35 +129,65 @@ class AlatCard extends StatelessWidget {
 
 //MENU
 class _MenuButton extends StatelessWidget {
-  final Map<String, dynamic> alat;
+  final int idAlat;
+  final int idKategori;
+  final String nama;
+  final int stok;
+  final String gambar;
+  final VoidCallback onEdit;
+  final VoidCallback onDeleted;
 
-  const _MenuButton({required this.alat});
+  const _MenuButton({
+    required this.idAlat,
+    required this.idKategori,
+    required this.nama,
+    required this.stok,
+    required this.gambar,
+    required this.onEdit,
+    required this.onDeleted,
+  });
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       onSelected: (value) {
         if (value == 'edit') {
-          showDialog(
-            context: context,
-            builder: (_) => AlatAddEdit(alat: alat),
-          );
+          onEdit();
         }
-         if (value == 'delete') {
+
+        if (value == 'delete') {
           showDialog(
             context: context,
             builder: (_) => ConfirmActionPopup(
               title: 'Hapus Alat',
-              message: 'Anda yakin menghapus\nalat ${alat["nama"]}?',
+              message: 'Anda yakin menghapus\nalat $nama?',
               confirmText: 'Hapus',
-              onConfirm: () {
+              onConfirm: () async {
                 Navigator.pop(context);
+
+                final alatService = AlatService(Supabase.instance.client);
+
+                final dipakai = await alatService.isAlatDipakai(idAlat);
+
+                if (dipakai) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Alat tidak bisa dihapus karena sudah pernah dipinjam',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                await alatService.deleteAlat(idAlat: idAlat, gambarUrl: gambar);
+                onDeleted(); 
               },
             ),
           );
         }
       },
-      
+
       constraints: const BoxConstraints(
         minWidth: 41,
         maxWidth: 41,

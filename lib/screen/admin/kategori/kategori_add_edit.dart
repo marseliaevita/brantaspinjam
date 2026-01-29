@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:brantaspinjam/widgets/card_popup.dart';
+import 'package:brantaspinjam/services/kategori_service.dart';
 
 class KategoriAddEdit extends StatefulWidget {
   final Map<String, dynamic>? kategori;
+  final KategoriService kategoriService; 
 
-  const KategoriAddEdit({super.key, this.kategori});
+  const KategoriAddEdit({
+    super.key,
+    this.kategori,
+    required this.kategoriService, 
+  });
+
 
   @override
   State<KategoriAddEdit> createState() => _KategoriAddEditState();
@@ -19,7 +26,7 @@ class _KategoriAddEditState extends State<KategoriAddEdit> {
   void initState() {
     super.initState();
     namaController =
-        TextEditingController(text: widget.kategori?['nama'] ?? '');
+        TextEditingController(text: widget.kategori?['nama_kategori'] ?? '');
   }
 
   @override
@@ -30,13 +37,30 @@ class _KategoriAddEditState extends State<KategoriAddEdit> {
       height: 290,
       submitText: isEdit ? 'Update' : 'Simpan',
       onCancel: () => Navigator.pop(context),
-      onSubmit: () {
-        final nama = namaController.text.trim();
+      onSubmit: () async {
+  final nama = namaController.text.trim();
+  if (nama.isEmpty) return;
 
-        if (nama.isEmpty) return;
+  try {
+    if (isEdit) {
+      // EDIT
+      await widget.kategoriService.updateKategori(
+        idKategori: widget.kategori!['id_kategori'],
+        namaKategori: nama,
+      );
+    } else {
+      // ADD
+      await widget.kategoriService.addKategori(namaKategori: nama);
+    }
 
-        Navigator.pop(context);
-      },
+    Navigator.pop(context); 
+  } catch (e) {
+    debugPrint('Error add/edit kategori: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Gagal menyimpan kategori')),
+    );
+  }
+},
       content: Padding(
         padding: const EdgeInsets.only(left: 16),
         child: Column(

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:brantaspinjam/services/peminjaman_services.dart';
 import 'package:brantaspinjam/widgets/card_peminjaman.dart';
 import 'package:brantaspinjam/widgets/card_cariadd.dart';
 import 'package:brantaspinjam/shared/enums.dart';
 import 'package:brantaspinjam/model/model_peminjaman.dart';
-import 'package:brantaspinjam/screen/admin/peminjaman/penimjaman_add_edit.dart';
 
 class PeminjamanAdminScreen extends StatefulWidget {
   const PeminjamanAdminScreen({super.key});
@@ -16,52 +15,28 @@ class PeminjamanAdminScreen extends StatefulWidget {
 class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
   String searchQuery = '';
   PeminjamanStatus? selectedStatus;
+  List<PeminjamanModel> dataPeminjaman = [];
+  bool isLoading = true;
 
-  /// DUMMY DATA (MODEL)
-  final List<PeminjamanModel> dummyData = [
-    PeminjamanModel(
-      nama: "Andi",
-      alat: "Kamera",
-      tanggalPinjam: DateTime(2026, 1, 12),
-      tanggalBatas: DateTime(2026, 1, 15),
-      status: PeminjamanStatus.pengajuan,
-    ),
-    PeminjamanModel(
-      nama: "Sinta",
-      alat: "Tripod",
-      tanggalPinjam: DateTime(2026, 1, 10),
-      tanggalBatas: DateTime(2026, 1, 14),
-      status: PeminjamanStatus.dipinjam,
-    ),
-    PeminjamanModel(
-      nama: "Budi",
-      alat: "Mic",
-      tanggalPinjam: DateTime(2026, 1, 8),
-      tanggalBatas: DateTime(2026, 1, 13),
-      tanggalDikembalikan: DateTime(2026, 1, 14),
-      status: PeminjamanStatus.dikembalikan,
-    ),
-    PeminjamanModel(
-      nama: "Rina",
-      alat: "Lighting",
-      tanggalPinjam: DateTime(2026, 1, 5),
-      tanggalBatas: DateTime(2026, 1, 10),
-      tanggalDikembalikan: DateTime(2026, 1, 10),
-      kondisi: "Baik",
-      dendaTerlambatHari: 0,
-      dendaKerusakan: const [],
-      status: PeminjamanStatus.selesai,
-    ),
-    PeminjamanModel(
-      nama: "Doni",
-      alat: "Kamera",
-      tanggalPinjam: DateTime(2026, 1, 4),
-      tanggalBatas: DateTime(2026, 1, 8),
-      status: PeminjamanStatus.ditolak,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadPeminjaman();
+  }
 
-  /// STATUS FILTER
+  Future<void> _loadPeminjaman() async {
+    setState(() => isLoading = true);
+    try {
+      final data = await fetchPeminjamanAdminDummy();
+      print("Fetched peminjaman: ${data.length}");
+      setState(() => dataPeminjaman = data);
+    } catch (e) {
+      print(e);
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
   final List<PeminjamanStatus?> statusList = const [
     null,
     PeminjamanStatus.pengajuan,
@@ -78,11 +53,11 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredData = dummyData.where((e) {
-      final statusMatch =
-          selectedStatus == null || e.status == selectedStatus;
-      final searchMatch =
-          e.nama.toLowerCase().contains(searchQuery.toLowerCase());
+    final filteredData = dataPeminjaman.where((e) {
+      final statusMatch = selectedStatus == null || e.status == selectedStatus;
+      final searchMatch = e.nama.toLowerCase().contains(
+        searchQuery.toLowerCase(),
+      );
       return statusMatch && searchMatch;
     }).toList();
 
@@ -90,26 +65,16 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-         
-          /// SEARCH + ADD
           Row(
             children: [
               SearchCard(
                 width: 304,
                 hint: "Cari data",
-                onChanged: (value) {
-                  setState(() => searchQuery = value);
-                },
+                onChanged: (value) => setState(() => searchQuery = value),
               ),
               const SizedBox(width: 12),
               GestureDetector(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) => const PeminjamanAddEdit(),
-                  );
-                },
+                onTap: () {},
                 child: Container(
                   width: 70,
                   height: 70,
@@ -117,16 +82,12 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
                     color: const Color(0xFFB3C8CF),
                     borderRadius: BorderRadius.circular(100),
                   ),
-                  child:
-                      const Icon(Icons.add, color: Colors.white, size: 28),
+                  child: const Icon(Icons.add, color: Colors.white, size: 28),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 20),
-
-          /// FILTER STATUS
           SizedBox(
             height: 40,
             child: ListView.separated(
@@ -136,7 +97,6 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
               itemBuilder: (_, i) {
                 final status = statusList[i];
                 final selected = selectedStatus == status;
-
                 return GestureDetector(
                   onTap: () => setState(() => selectedStatus = status),
                   child: Container(
@@ -164,21 +124,19 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
               },
             ),
           ),
-
           const SizedBox(height: 16),
-
-          /// LIST CARD
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredData.length,
-              itemBuilder: (_, index) {
-                final item = filteredData[index];
-                return PeminjamanCard(
-                  mode: CardMode.admin,
-                  data: item,
-                );
-              },
-            ),
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredData.isEmpty
+                ? const Center(child: Text("Tidak ada data"))
+                : ListView.builder(
+                    itemCount: filteredData.length,
+                    itemBuilder: (_, index) {
+                      final item = filteredData[index];
+                      return PeminjamanCard(mode: CardMode.admin, data: item);
+                    },
+                  ),
           ),
         ],
       ),

@@ -35,7 +35,7 @@ class _AlatScreenState extends State<AlatScreen> {
     loadAlat();
   }
 
-  // Load kategori 
+  // Load kategori
   Future<void> loadKategori() async {
     try {
       final data = await kategoriService.getKategori();
@@ -51,7 +51,7 @@ class _AlatScreenState extends State<AlatScreen> {
     }
   }
 
-  // Load data 
+  // Load data
   Future<void> loadAlat() async {
     try {
       final data = await alatService.getAlat();
@@ -62,6 +62,7 @@ class _AlatScreenState extends State<AlatScreen> {
             (e) => {
               "id": e["id_alat"],
               "nama": e["nama_alat"],
+              "id_kategori": e["id_kategori"],
               "kategori": getKategoriName(e["id_kategori"]),
               "stok": e["stok"],
               "gambar": e["gambar"] ?? "",
@@ -145,7 +146,7 @@ class _AlatScreenState extends State<AlatScreen> {
                     context: context,
                     builder: (_) => const AlatAddEdit(),
                   );
-                  if (result == true) loadAlat(); 
+                  if (result == true) loadAlat();
                 },
                 child: Container(
                   width: 70,
@@ -220,10 +221,33 @@ class _AlatScreenState extends State<AlatScreen> {
               itemBuilder: (_, i) {
                 final alat = filtered[i];
                 return AlatCard(
+                  idAlat: alat["id"],
+                  idKategori: alat["id_kategori"],
                   nama: alat["nama"],
                   kategori: alat["kategori"],
                   stok: alat["stok"],
                   gambar: alat["gambar"],
+                  onEdit: () async {
+                    final result = await showDialog(
+                      context: context,
+                      builder: (_) => AlatAddEdit(
+                        alat: {
+                          "id_alat": alat["id"],
+                          "nama_alat": alat["nama"],
+                          "id_kategori": alat["id_kategori"],
+                          "stok": alat["stok"],
+                          "gambar": alat["gambar"],
+                        },
+                      ),
+                    );
+
+                    if (result == true) {
+                      loadAlat();
+                    }
+                  },
+                  onDeleted: () {
+                    loadAlat();
+                  },
                 );
               },
             ),

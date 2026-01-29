@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:brantaspinjam/services/denda_service.dart';
 import 'package:brantaspinjam/widgets/card_cariadd.dart';
 import 'package:brantaspinjam/widgets/card_popup.dart';
 import 'package:brantaspinjam/widgets/card_denda.dart';
@@ -13,12 +15,59 @@ class DendaScreen extends StatefulWidget {
 
 class _DendaScreenState extends State<DendaScreen> {
   String searchQuery = "";
+  bool isLoading = true;
+  List<Map<String, dynamic>> dendaList = [];
+  late DendaService dendaService;
 
-  final List<Map<String, dynamic>> dendaList = [
-    {'nama': 'Telat Pengembalian', 'nominal': 5000},
-    {'nama': 'Alat Rusak', 'nominal': 25000},
-    {'nama': 'Hilang', 'nominal': 100000},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    dendaService = DendaService(Supabase.instance.client);
+    fetchDenda();
+  }
+
+  Future<void> fetchDenda() async {
+    try {
+      final data = await dendaService.getDenda();
+      if (!mounted) return;
+      setState(() {
+        dendaList = data
+            .map(
+              (d) => {
+                'nama': d['jenis_denda'],
+                'nominal': (d['tarif'] as num).toInt(),
+                'id_denda': d['id_denda'],  
+              },
+            )
+            .toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> deleteDenda(int id) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => isLoading = true);
+
+    try {
+      await dendaService.deleteDenda(id);
+      if (!mounted) return;
+      await fetchDenda();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Denda berhasil dihapus')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus denda')),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +98,7 @@ class _DendaScreenState extends State<DendaScreen> {
               showDialog(
                 context: context,
                 builder: (_) => const DendaAddEdit(),
-              );
+              ).then((_) => fetchDenda());
             },
           ),
 
@@ -72,24 +121,29 @@ class _DendaScreenState extends State<DendaScreen> {
                           showDialog(
                             context: context,
                             builder: (_) => DendaAddEdit(denda: denda),
+                          ).then((_) => fetchDenda());
+                        },
+                        onDelete: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => ConfirmActionPopup(
+                                  title: "Hapus Denda",
+                                  message:
+                                      "Anda yakin menghapus data denda ini?",
+                                  confirmText: "Hapus",
+                                  onConfirm: () {
+                                    Navigator.pop(context, true);
+                                  },
+                                ),
+                              );
+
+                              if (confirmed != true) return;
+
+                              await deleteDenda(denda['id_denda']);
+                            },
                           );
                         },
-                        onDelete: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => ConfirmActionPopup(
-                              title: "Hapus Denda",
-                              message: "Anda yakin menghapus data denda ini?",
-                              confirmText: "Hapus",
-                              onConfirm: () {
-                              
-                              },
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                      ),
           ),
         ],
       ),
