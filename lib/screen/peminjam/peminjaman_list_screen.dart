@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:brantaspinjam/services/peminjaman_services.dart';
 import 'package:brantaspinjam/widgets/card_peminjaman.dart';
 import 'package:brantaspinjam/widgets/card_cariadd.dart';
 import 'package:brantaspinjam/shared/enums.dart';
-import 'package:brantaspinjam/model/model_peminjaman.dart'; 
+import 'package:brantaspinjam/model/model_peminjaman.dart';
 
 class PeminjamanListScreen extends StatefulWidget {
   const PeminjamanListScreen({super.key});
@@ -15,45 +16,8 @@ class _PeminjamanListScreenState extends State<PeminjamanListScreen> {
   String searchQuery = '';
   PeminjamanStatus? selectedStatus;
 
-  // Dummy
-  final List<PeminjamanModel> dummyData = [
-    PeminjamanModel(
-      nama: "Laptop",
-      alat: "Laptop",
-      tanggalPinjam: DateTime(2026, 1, 12),
-      tanggalBatas: DateTime(2026, 1, 15),
-      status: PeminjamanStatus.pengajuan,
-    ),
-    PeminjamanModel(
-      nama: "Marselia",
-      alat: "Proyektor",
-      tanggalPinjam: DateTime(2026, 1, 10),
-      tanggalBatas: DateTime(2026, 1, 14),
-      status: PeminjamanStatus.dipinjam,
-    ),
-    PeminjamanModel(
-      nama: "Kamera",
-      alat: "Kamera",
-      tanggalPinjam: DateTime(2026, 1, 8),
-      tanggalBatas: DateTime(2026, 1, 12),
-      status: PeminjamanStatus.selesai,
-    ),
-    PeminjamanModel(
-      nama: "Tripod",
-      alat: "Tripod",
-      tanggalPinjam: DateTime(2026, 1, 5),
-      tanggalBatas: DateTime(2026, 1, 10),
-      status: PeminjamanStatus.ditolak,
-    ),
-    PeminjamanModel(
-      nama: "Tripod",
-      alat: "Tripod",
-      tanggalPinjam: DateTime(2026, 1, 5),
-      tanggalBatas: DateTime(2026, 1, 10),
-      tanggalDikembalikan: DateTime(2026, 1, 10),
-      status: PeminjamanStatus.dikembalikan,
-    ),
-  ];
+  List<PeminjamanModel> _realData = [];
+  bool _isLoading = true;
 
   final statusList = [
     null,
@@ -64,7 +28,22 @@ class _PeminjamanListScreenState extends State<PeminjamanListScreen> {
     PeminjamanStatus.ditolak,
   ];
 
-  // Ambil label 
+  @override
+  void initState() {
+    super.initState();
+    _getData();
+  }
+
+  Future<void> _getData() async {
+    setState(() => _isLoading = true);
+    final data = await fetchPeminjamanUser();
+    setState(() {
+      _realData = data;
+      _isLoading = false;
+    });
+  }
+
+  // Ambil label
   String getStatusLabel(PeminjamanStatus? status) {
     if (status == null) return "Semua";
     return status.label;
@@ -72,10 +51,11 @@ class _PeminjamanListScreenState extends State<PeminjamanListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredData = dummyData.where((e) {
+    final filteredData = _realData.where((e) {
       final statusMatch = selectedStatus == null || e.status == selectedStatus;
-      final searchMatch =
-          e.nama.toLowerCase().contains(searchQuery.toLowerCase());
+      final searchMatch = e.nama.toLowerCase().contains(
+        searchQuery.toLowerCase(),
+      );
       return statusMatch && searchMatch;
     }).toList();
 
@@ -105,8 +85,10 @@ class _PeminjamanListScreenState extends State<PeminjamanListScreen> {
                 return GestureDetector(
                   onTap: () => setState(() => selectedStatus = status),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: selected
                           ? const Color(0xFF4B4376)
@@ -116,8 +98,9 @@ class _PeminjamanListScreenState extends State<PeminjamanListScreen> {
                     child: Text(
                       getStatusLabel(status),
                       style: TextStyle(
-                        color:
-                            selected ? Colors.white : const Color(0xFF4B4376),
+                        color: selected
+                            ? Colors.white
+                            : const Color(0xFF4B4376),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -131,18 +114,26 @@ class _PeminjamanListScreenState extends State<PeminjamanListScreen> {
 
           // LIST CARD
           Expanded(
-  child: ListView.builder(
-    itemCount: filteredData.length,
-    itemBuilder: (_, index) {
-      final item = filteredData[index];
-      return PeminjamanCard(
-        data: item, 
-        mode: CardMode.peminjam, 
-      );
-    },
-  ),
-)
-
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _getData,
+                    child: filteredData.isEmpty
+                        ? const Center(
+                            child: Text("Belum ada riwayat peminjaman"),
+                          )
+                        : ListView.builder(
+                            itemCount: filteredData.length,
+                            itemBuilder: (_, index) {
+                              final item = filteredData[index];
+                              return PeminjamanCard(
+                                data: item,
+                                mode: CardMode.peminjam,
+                              );
+                            },
+                          ),
+                  ),
+          ),
         ],
       ),
     );

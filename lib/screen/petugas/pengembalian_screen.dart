@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:brantaspinjam/services/peminjaman_services.dart';
 import 'package:brantaspinjam/widgets/card_peminjaman.dart';
 import 'package:brantaspinjam/widgets/card_cariadd.dart';
 import 'package:brantaspinjam/shared/enums.dart';
@@ -17,33 +18,29 @@ class _PengembalianPetugasScreenState
   String searchQuery = '';
   PeminjamanStatus? selectedStatus;
 
-  // =====================
-  // DUMMY DATA
-  // =====================
-  final dummyData = [
-    PeminjamanModel(
-      nama: "Andi",
-      alat: "Kamera",
-      tanggalPinjam: DateTime(2026, 1, 15),
-      tanggalBatas: DateTime(2026, 1, 20),
-      tanggalDikembalikan: DateTime(2026, 1, 18),
-      status: PeminjamanStatus.dikembalikan,
-    ),
-    PeminjamanModel(
-      nama: "Budi",
-      alat: "Laptop",
-      tanggalPinjam: DateTime(2026, 1, 14),
-      tanggalBatas: DateTime(2026, 1, 19),
-      tanggalDikembalikan: DateTime(2026, 1, 19),
-      status: PeminjamanStatus.selesai,
-    ),
-  ];
+  List<PeminjamanModel> _dataList = [];
+  bool _isLoading = true;
 
   final statusList = [
     null,
     PeminjamanStatus.dikembalikan,
     PeminjamanStatus.selesai,
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initFetch();
+  }
+
+  Future<void> _initFetch() async {
+    setState(() => _isLoading = true);
+    final data = await fetchPengembalianAdmin(); 
+    setState(() {
+      _dataList = data;
+      _isLoading = false;
+    });
+  }
 
   String getStatusLabel(PeminjamanStatus? status) {
     switch (status) {
@@ -58,7 +55,7 @@ class _PengembalianPetugasScreenState
 
   @override
   Widget build(BuildContext context) {
-    final filteredData = dummyData.where((e) {
+    final filteredData = _dataList.where((e) {
       final statusMatch = selectedStatus == null || e.status == selectedStatus;
       final searchMatch = e.nama.toLowerCase().contains(searchQuery.toLowerCase());
       return statusMatch && searchMatch;

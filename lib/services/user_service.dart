@@ -33,4 +33,21 @@ class UserService {
         return UserRole.peminjam;
     }
   }
+
+  //ambil
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
+  final user = _client.auth.currentUser;
+
+  if (user == null) {
+    throw Exception('User belum login');
+  }
+
+  final res = await _client
+      .from('users')
+      .select('user_id, name, email, role, is_active')
+      .order('created_at', ascending: false);
+
+  return List<Map<String, dynamic>>.from(res);
+}
+
 }

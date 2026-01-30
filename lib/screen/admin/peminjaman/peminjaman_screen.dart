@@ -4,6 +4,7 @@ import 'package:brantaspinjam/widgets/card_peminjaman.dart';
 import 'package:brantaspinjam/widgets/card_cariadd.dart';
 import 'package:brantaspinjam/shared/enums.dart';
 import 'package:brantaspinjam/model/model_peminjaman.dart';
+import 'package:brantaspinjam/screen/admin/peminjaman/penimjaman_add_edit.dart';
 
 class PeminjamanAdminScreen extends StatefulWidget {
   const PeminjamanAdminScreen({super.key});
@@ -27,7 +28,7 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
   Future<void> _loadPeminjaman() async {
     setState(() => isLoading = true);
     try {
-      final data = await fetchPeminjamanAdminDummy();
+      final data = await fetchPeminjamanAdmin();
       print("Fetched peminjaman: ${data.length}");
       setState(() => dataPeminjaman = data);
     } catch (e) {
@@ -74,7 +75,16 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
               ),
               const SizedBox(width: 12),
               GestureDetector(
-                onTap: () {},
+                onTap: () async {
+                  final bool? refresh = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => const PeminjamanAddEdit(),
+                  );
+
+                  if (refresh == true) {
+                    _loadPeminjaman();
+                  }
+                },
                 child: Container(
                   width: 70,
                   height: 70,

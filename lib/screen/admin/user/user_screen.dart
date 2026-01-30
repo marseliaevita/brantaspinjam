@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:brantaspinjam/services/user_service.dart';
 import 'package:brantaspinjam/widgets/card_cariadd.dart';
 import 'package:brantaspinjam/widgets/card_popup.dart';
 import 'package:brantaspinjam/widgets/card_user.dart';
@@ -13,17 +14,30 @@ class UserScreen extends StatefulWidget {
 
 class _UserScreenState extends State<UserScreen> {
   String searchQuery = "";
+  bool isLoading = true;
+  List<Map<String, dynamic>> userList = [];
 
-  final List<Map<String, dynamic>> userList = [
-    {'nama': 'Marselia', 'role': 'Admin'},
-    {'nama': 'Andi', 'role': 'Petugas'},
-    {'nama': 'Sinta', 'role': 'Petugas'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    loadUsers();
+  }
+
+  Future<void> loadUsers() async {
+    try {
+      final data = await UserService().getAllUsers();
+      setState(() => userList = data);
+    } catch (e) {
+      print(e);
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final filteredUser = userList.where((user) {
-      return user['nama'].toLowerCase().contains(searchQuery.toLowerCase());
+      return user['name'].toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
 
     return Padding(
@@ -42,7 +56,7 @@ class _UserScreenState extends State<UserScreen> {
 
           const SizedBox(height: 12),
 
-          // ADD 
+          // ADD
           AddButtonCard(
             title: "Tambah User",
             onTap: () {
@@ -52,7 +66,7 @@ class _UserScreenState extends State<UserScreen> {
 
           const SizedBox(height: 16),
 
-          // LIST 
+          // LIST
           Expanded(
             child: filteredUser.isEmpty
                 ? const Center(child: Text("User tidak ditemukan"))
@@ -60,12 +74,11 @@ class _UserScreenState extends State<UserScreen> {
                     itemCount: filteredUser.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final user = filteredUser[index];
+                     final user = filteredUser[index];
 
                       return CardUser(
-                        name: user['nama'],
+                        name: user['name'] ?? '-',
                         role: user['role'],
-
                         //EDIT
                         onEdit: () {
                           showDialog(
@@ -82,8 +95,7 @@ class _UserScreenState extends State<UserScreen> {
                               title: "Nonaktifkan Akun",
                               message: "Anda yakin menonaktifkan akun ini?",
                               confirmText: "Nonaktifkan",
-                              onConfirm: () {
-                              },
+                              onConfirm: () {},
                             ),
                           );
                         },

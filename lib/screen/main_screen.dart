@@ -114,28 +114,27 @@ class _MainScreenState extends State<MainScreen> {
         role: role, 
         activeMenu: activeMenu,
         onMenuTap: (menu) {
-          if (menu == 'logout') {showDialog(
-        context: context,
-        builder: (context) => ConfirmActionPopup(
-          title: 'Konfirmasi Logout',
-          message: 'Apakah Anda yakin ingin keluar?',
-          confirmText: 'Logout',
-          onConfirm: () async {
-            // Tutup popup
-            Navigator.pop(context);
-            // Lakukan logout
-            await AuthService().signOut();
-            // Kembali ke halaman login
-            Navigator.pushReplacementNamed(context, '/login');
-          },
-        ),
-      );
-      return;
-    }
-
-          setState(() => activeMenu = menu);
-          Navigator.pop(context);
+  if (menu == 'logout') {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => ConfirmActionPopup( 
+        title: 'Konfirmasi Logout',
+        message: 'Apakah Anda yakin ingin keluar?',
+        confirmText: 'Logout',
+        onConfirm: () async {
+          Navigator.pop(dialogContext);
+          await AuthService().signOut();
+          if (!mounted) return; 
+          Navigator.pushReplacementNamed(context, '/login');
         },
+      ),
+    );
+    return;
+  }
+
+  setState(() => activeMenu = menu);
+  Navigator.pop(context);
+},
       ),
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(100),

@@ -38,24 +38,32 @@ class PeminjamanModel {
   bool get showKondisi => isSelesai;
   bool get showDenda => isSelesai;
 
-  /// DUMMY MAPPING
-  factory PeminjamanModel.fromMap(Map<String, dynamic> map) {
+  factory PeminjamanModel.fromMap(
+    Map<String, dynamic> map, {
+    Map<String, dynamic>? extraData,
+  }) {
     return PeminjamanModel(
-      nama: "User ${map['user_id'].toString().substring(0,5)}",
-      alat: "Alat ${map['id_alat']}",
+      nama: map['peminjam']?['name'] ?? "User",
+      alat: map['alat']?['nama_alat'] ?? "Alat",
       tanggalPinjam: DateTime.parse(map['tanggal_pinjam']),
       tanggalBatas: DateTime.parse(map['tanggal_kembali']),
-      tanggalDikembalikan: null,
+
+      tanggalDikembalikan: extraData?['tanggal_dikembalikan'] != null
+          ? DateTime.parse(extraData!['tanggal_dikembalikan'])
+          : null,
+
       status: PeminjamanStatus.values.firstWhere(
         (e) => e.name == map['status_peminjaman'],
         orElse: () => PeminjamanStatus.pengajuan,
       ),
-      kondisi: "Baik",
-      dendaTerlambatHari: 0,
+
+      kondisi: extraData?['kondisi_alat'],
+      dendaTerlambatHari: extraData?['total_denda']?.toInt() ?? 0,
       dendaKerusakan: [],
     );
   }
 
+  /// MAPPING
   Map<String, dynamic> toMapForDB({
     required String userId,
     required int alatId,
@@ -69,8 +77,9 @@ class PeminjamanModel {
       'status_peminjaman': status.name,
       'kondisi': kondisi,
       'denda_terlambat': dendaTerlambatHari,
-      'denda_kerusakan':
-          dendaKerusakan != null ? jsonEncode(dendaKerusakan) : null,
+      'denda_kerusakan': dendaKerusakan != null
+          ? jsonEncode(dendaKerusakan)
+          : null,
     };
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:brantaspinjam/services/peminjaman_services.dart';
 import 'package:brantaspinjam/widgets/card_peminjaman.dart';
 import 'package:brantaspinjam/widgets/card_cariadd.dart';
 import 'package:brantaspinjam/shared/enums.dart';
@@ -16,51 +17,44 @@ class _PeminjamanPetugasScreenState extends State<PeminjamanPetugasScreen> {
   String searchQuery = '';
   PeminjamanStatus? selectedStatus;
 
-  // Dummy data pakai model
-  final List<PeminjamanModel> dummyData = [
-    PeminjamanModel(
-      nama: "Andi",
-      alat: "Laptop",
-      tanggalPinjam: DateTime(2026, 1, 12),
-      tanggalBatas: DateTime(2026, 1, 15),
-      status: PeminjamanStatus.pengajuan,
-    ),
-    PeminjamanModel(
-      nama: "Sinta",
-      alat: "Proyektor",
-      tanggalPinjam: DateTime(2026, 1, 10),
-      tanggalBatas: DateTime(2026, 1, 14),
-      status: PeminjamanStatus.dipinjam,
-    ),
-    PeminjamanModel(
-      nama: "Budi",
-      alat: "Kamera",
-      tanggalPinjam: DateTime(2026, 1, 8),
-      tanggalBatas: DateTime(2026, 1, 12),
-      status: PeminjamanStatus.selesai,
-    ),
-    PeminjamanModel(
-      nama: "Rina",
-      alat: "Tripod",
-      tanggalPinjam: DateTime(2026, 1, 6),
-      tanggalBatas: DateTime(2026, 1, 10),
-      status: PeminjamanStatus.ditolak,
-    ),
-  ];
+  List<PeminjamanModel> _peminjamanList = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await fetchPeminjamanAdmin();
+      setState(() {
+        _peminjamanList = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
 
   final statusList = [
     null,
     PeminjamanStatus.pengajuan,
     PeminjamanStatus.dipinjam,
-    PeminjamanStatus.dikembalikan,
-    PeminjamanStatus.selesai,
     PeminjamanStatus.ditolak,
   ];
 
   @override
   Widget build(BuildContext context) {
-    final filteredData = dummyData.where((e) {
-      final statusMatch = selectedStatus == null || e.status == selectedStatus;
+    final filteredData = _peminjamanList.where((e) {
+      final isStatusAktif =
+          e.status != PeminjamanStatus.dikembalikan &&
+          e.status != PeminjamanStatus.selesai;
+      final statusMatch = selectedStatus == null
+          ? isStatusAktif
+          : e.status == selectedStatus;
       final searchMatch = e.nama.toLowerCase().contains(
         searchQuery.toLowerCase(),
       );
@@ -122,13 +116,23 @@ class _PeminjamanPetugasScreenState extends State<PeminjamanPetugasScreen> {
 
           // LIST CARD
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredData.length,
-              itemBuilder: (_, index) {
-                final item = filteredData[index];
-                return PeminjamanCard(data: item, mode: CardMode.petugas);
-              },
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredData.isEmpty
+                ? const Center(child: Text("Tidak ada data peminjaman"))
+                : RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: ListView.builder(
+                      itemCount: filteredData.length,
+                      itemBuilder: (_, index) {
+                        final item = filteredData[index];
+                        return PeminjamanCard(
+                          data: item,
+                          mode: CardMode.petugas,
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
