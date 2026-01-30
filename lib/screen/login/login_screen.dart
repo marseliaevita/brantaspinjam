@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:brantaspinjam/services/auth_service.dart';
 import 'package:brantaspinjam/screen/main_screen.dart';
+import 'package:brantaspinjam/services/user_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -144,27 +145,34 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _login() async {
-    setState(() => _isLoading = true);
+//FUNGSI
+ void _login() async {
+  setState(() => _isLoading = true);
 
-    try {
-      final user = await _authService.signIn(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
+  try {
+    final user = await _authService.signIn(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+    );
 
-      if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+    if (user != null) {
+      final role = await UserService().getMyRole();
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MainScreen(role: role),
+        ),
       );
-    } finally {
-      setState(() => _isLoading = false);
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.toString())),
+    );
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
+
+
 }

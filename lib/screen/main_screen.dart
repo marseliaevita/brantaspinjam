@@ -16,19 +16,31 @@ import 'package:brantaspinjam/screen/peminjam/pinjam_alat_screen.dart';
 import 'package:brantaspinjam/screen/admin/log_aktivitas.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final UserRole role;
+
+  const MainScreen({
+    super.key,
+    required this.role,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
+
 class _MainScreenState extends State<MainScreen> {
-UserRole role = UserRole.admin;
-//UserRole role = UserRole.petugas;
-//UserRole role = UserRole.peminjam;
-
-
   String activeMenu = 'dashboard';
+
+    late UserRole role;
+
+    @override
+    void initState() {
+      super.initState();
+      role = widget.role;
+    }
+
+
+
 
   // APP BAR TITLE
   String getAppBarTitle() {
