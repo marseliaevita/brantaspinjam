@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:brantaspinjam/shared/enums.dart';
 
 class PeminjamanModel {
+  final int? idPeminjaman;
   final String nama;
   final String alat;
 
   final String userId;
   final int idAlat;
-  
+  final int? idDenda;
   
   final DateTime tanggalPinjam;
   final DateTime tanggalBatas;
@@ -20,10 +21,12 @@ class PeminjamanModel {
   final List<int>? dendaKerusakan;
 
   PeminjamanModel({
+    required this.idPeminjaman,
     required this.nama,
     required this.alat,
     required this.userId,
     required this.idAlat,
+    this.idDenda,
     required this.tanggalPinjam,
     required this.tanggalBatas,
     this.tanggalDikembalikan,
@@ -56,10 +59,12 @@ class PeminjamanModel {
     Map<String, dynamic>? extraData,
   }) {
     return PeminjamanModel(
+      idPeminjaman: map['id_peminjaman'],
       nama: map['peminjam']?['name'] ?? "User",
       alat: map['alat']?['nama_alat'] ?? "Alat",
       userId: map['user_id'],
       idAlat: map['id_alat'],
+      idDenda: extraData != null ? extraData['id_denda'] as int? : null,
 
       tanggalPinjam: DateTime.parse(map['tanggal_pinjam']),
       tanggalBatas: DateTime.parse(map['tanggal_kembali']),

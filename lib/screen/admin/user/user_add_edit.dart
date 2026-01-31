@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:brantaspinjam/services/user_service.dart';
 import 'package:brantaspinjam/widgets/card_popup.dart';
 
 class UserAddEdit extends StatefulWidget {
@@ -30,6 +31,39 @@ class _UserAddEditState extends State<UserAddEdit> {
         TextEditingController(text: widget.user?['role'] ?? '');
   }
 
+  Future<void> _submit() async {
+    try {
+      final service = UserService();
+
+      if (isEdit) {
+        await service.updateUser(
+          widget.user!['user_id'],
+          nameController.text,
+          roleController.text,
+        );
+      } else {
+        await service.createUser(
+          email: emailController.text,
+          password: passwordController.text,
+          name: nameController.text,
+          role: roleController.text,
+        );
+      }
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (_) => ConfirmActionPopup(
+          title: 'Error',
+          message: e.toString(),
+          confirmText: 'OK',
+          onConfirm: () => Navigator.pop(context),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CardPopup(
@@ -38,12 +72,13 @@ class _UserAddEditState extends State<UserAddEdit> {
       height: 498,
       submitText: isEdit ? 'Update' : 'Simpan',
       onCancel: () => Navigator.pop(context),
-      onSubmit: () {
-        Navigator.pop(context);
-      },
-      content: Padding(
-        padding: const EdgeInsets.only(left: 16),
-        child: Column(
+      onSubmit: _submit,
+
+      content: SingleChildScrollView(
+  child: Padding(
+    padding: const EdgeInsets.only(left: 16),
+    child: Column(
+
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
@@ -109,6 +144,7 @@ class _UserAddEditState extends State<UserAddEdit> {
             ],
           ],
         ),
+      ),
       ),
     );
   }
