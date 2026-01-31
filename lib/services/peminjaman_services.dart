@@ -67,7 +67,7 @@ Future<List<PeminjamanModel>> fetchPengembalianAdmin() async {
   }
 }
 
-//list peminjam yang login
+//list peminjaman role=peminjam
 Future<List<PeminjamanModel>> fetchPeminjamanUser() async {
   try {
     final user = supabase.auth.currentUser;

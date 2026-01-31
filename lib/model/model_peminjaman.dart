@@ -5,6 +5,10 @@ class PeminjamanModel {
   final String nama;
   final String alat;
 
+  final String userId;
+  final int idAlat;
+  
+  
   final DateTime tanggalPinjam;
   final DateTime tanggalBatas;
   final DateTime? tanggalDikembalikan;
@@ -13,11 +17,13 @@ class PeminjamanModel {
 
   final String? kondisi;
   final int? dendaTerlambatHari;
-  final List<String>? dendaKerusakan;
+  final List<int>? dendaKerusakan;
 
   PeminjamanModel({
     required this.nama,
     required this.alat,
+    required this.userId,
+    required this.idAlat,
     required this.tanggalPinjam,
     required this.tanggalBatas,
     this.tanggalDikembalikan,
@@ -25,7 +31,14 @@ class PeminjamanModel {
     this.kondisi,
     this.dendaTerlambatHari,
     this.dendaKerusakan,
+     
   });
+
+   int get totalDenda {
+    final terlambat = dendaTerlambatHari ?? 0;
+    final rusak = dendaKerusakan?.fold(0, (sum, e) => sum + e) ?? 0;
+    return terlambat + rusak;
+  }
 
   /// STATUS CHECK
   bool get isPengajuan => status == PeminjamanStatus.pengajuan;
@@ -45,6 +58,9 @@ class PeminjamanModel {
     return PeminjamanModel(
       nama: map['peminjam']?['name'] ?? "User",
       alat: map['alat']?['nama_alat'] ?? "Alat",
+      userId: map['user_id'],
+      idAlat: map['id_alat'],
+
       tanggalPinjam: DateTime.parse(map['tanggal_pinjam']),
       tanggalBatas: DateTime.parse(map['tanggal_kembali']),
 
@@ -59,7 +75,10 @@ class PeminjamanModel {
 
       kondisi: extraData?['kondisi_alat'],
       dendaTerlambatHari: extraData?['total_denda']?.toInt() ?? 0,
-      dendaKerusakan: [],
+     dendaKerusakan: extraData?['denda_kerusakan'] != null
+    ? List<int>.from((jsonDecode(extraData!['denda_kerusakan']) as List<dynamic>))
+    : [],
+
     );
   }
 

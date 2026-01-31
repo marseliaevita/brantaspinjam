@@ -230,24 +230,54 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
     }
 
     if (data.showDenda) {
-      content.add(const Divider(height: 20));
+  if ((data.dendaTerlambatHari ?? 0) > 0) {
+    content.add(
+      _buildRowValue("Denda Terlambat", "Rp ${data.dendaTerlambatHari}"),
+    );
+  }
 
+  if ((data.dendaKerusakan?.isNotEmpty ?? false)) {
+    for (int i = 0; i < data.dendaKerusakan!.length; i++) {
       content.add(
-        _buildRowValue(
-          "Denda Terlambat",
-          "${data.dendaTerlambatHari ?? 0} hari",
-        ),
-      );
-
-      content.add(const SizedBox(height: 4));
-
-      content.add(
-        _buildRowValue(
-          "Denda Kerusakan",
-          (data.dendaKerusakan ?? []).join(', '),
-        ),
+        _buildRowValue("Denda Rusak #${i + 1}", "Rp ${data.dendaKerusakan![i]}"),
       );
     }
+  }
+
+  // Total Denda
+  content.add(const SizedBox(height: 12));
+  content.add(
+    Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade700,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            "TOTAL TAGIHAN",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            "Rp ${data.totalDenda}",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
 
     /// BUTTON PER ROLE
     content.add(const SizedBox(height: 12));
@@ -347,11 +377,13 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
                 width: 66,
                 height: 29,
                 child: ElevatedButton(
-                  onPressed: () {showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => const PeminjamanCekPopup(),
-  );},
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => const PeminjamanCekPopup(),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     side: const BorderSide(color: Colors.red, width: 2),
@@ -430,7 +462,6 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
     return widgets;
   }
 
- 
   // SMALL WIDGETS
   Widget _buildDateColumn(String label, String date) {
     return Column(
