@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:brantaspinjam/services/peminjaman_services.dart';
+import 'package:brantaspinjam/services/petugas_services.dart';
 import 'package:brantaspinjam/shared/enums.dart';
 import 'package:brantaspinjam/shared/colors.dart';
 import 'package:brantaspinjam/shared/status_badge.dart';
 import 'package:brantaspinjam/model/model_peminjaman.dart';
 import 'package:brantaspinjam/screen/admin/peminjaman/penimjaman_add_edit.dart';
+import 'package:brantaspinjam/screen/peminjam/popup_kembali.dart';
 import 'package:brantaspinjam/screen/petugas/popup_cek.dart';
 import 'package:brantaspinjam/widgets/card_popup.dart';
 
 class PeminjamanCard extends StatefulWidget {
   final CardMode mode;
   final PeminjamanModel data;
+  final VoidCallback? onRefresh;
+  final Future<void> Function()? onDelete;
 
-  const PeminjamanCard({super.key, required this.mode, required this.data});
+  const PeminjamanCard({
+    super.key,
+    required this.mode,
+    required this.data,
+    this.onRefresh,
+    this.onDelete,
+  });
 
   @override
   State<PeminjamanCard> createState() => _PeminjamanCardState();
@@ -230,54 +240,55 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
     }
 
     if (data.showDenda) {
-  if ((data.dendaTerlambatHari ?? 0) > 0) {
-    content.add(
-      _buildRowValue("Denda Terlambat", "Rp ${data.dendaTerlambatHari}"),
-    );
-  }
+      if ((data.dendaTerlambatHari ?? 0) > 0) {
+        content.add(
+          _buildRowValue("Denda Terlambat", "Rp ${data.dendaTerlambatHari}"),
+        );
+      }
 
-  if ((data.dendaKerusakan?.isNotEmpty ?? false)) {
-    for (int i = 0; i < data.dendaKerusakan!.length; i++) {
+      if ((data.dendaKerusakan?.isNotEmpty ?? false)) {
+        for (int i = 0; i < data.dendaKerusakan!.length; i++) {
+          content.add(
+            _buildRowValue(
+              "Denda Rusak #${i + 1}",
+              "Rp ${data.dendaKerusakan![i]}",
+            ),
+          );
+        }
+      }
+
+      // Total Denda
+      content.add(const SizedBox(height: 12));
       content.add(
-        _buildRowValue("Denda Rusak #${i + 1}", "Rp ${data.dendaKerusakan![i]}"),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.red.shade700,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "TOTAL TAGIHAN",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                "Rp ${data.totalDenda}",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
-  }
-
-  // Total Denda
-  content.add(const SizedBox(height: 12));
-  content.add(
-    Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.red.shade700,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            "TOTAL TAGIHAN",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            "Rp ${data.totalDenda}",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-
 
     /// BUTTON PER ROLE
     content.add(const SizedBox(height: 12));
@@ -298,15 +309,42 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
           children: [
             _iconButton(
               icon: Icons.edit,
-              onTap: () {
-                showDialog(
+              onTap: () async {
+                final refresh = await showDialog<bool>(
                   context: context,
                   builder: (_) => PeminjamanAddEdit(data: data),
                 );
+
+                if (refresh == true) {
+                  widget.onRefresh?.call();
+                }
               },
             ),
             const SizedBox(width: 8),
-            _iconButton(icon: Icons.delete_outline, onTap: () {}),
+
+            _iconButton(
+              icon: Icons.delete_outline,
+              onTap: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => ConfirmActionPopup(
+                    title: "Hapus Peminjaman",
+                    message: "Anda yakin menghapus data peminjaman ini?",
+                    confirmText: "Hapus",
+                    onConfirm: () {
+                      Navigator.pop(context, true);
+                    },
+                  ),
+                );
+
+                if (confirmed != true) return;
+                if (widget.data.idPeminjaman == null) return;
+
+                await deletePeminjaman(widget.data.idPeminjaman!);
+
+                widget.onRefresh?.call();
+              },
+            ),
           ],
         ),
       );
@@ -325,7 +363,15 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
                 width: 112,
                 height: 42,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final success = await approvePeminjaman(data.idPeminjaman!);
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Peminjaman disetujui')),
+                      );
+                      widget.onRefresh?.call();
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0E0A26),
                     shape: RoundedRectangleBorder(
@@ -347,7 +393,15 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
                 width: 112,
                 height: 42,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final success = await rejectPeminjaman(data.idPeminjaman!);
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Peminjaman ditolak')),
+                      );
+                      widget.onRefresh?.call();
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF0000),
                     shape: RoundedRectangleBorder(
@@ -381,7 +435,10 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
                     showDialog(
                       context: context,
                       barrierDismissible: false,
-                      builder: (_) => const PeminjamanCekPopup(),
+                      builder: (_) => PeminjamanCekPopup(
+                        data: data,
+                        onRefresh: widget.onRefresh,
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -422,18 +479,14 @@ class _PeminjamanCardState extends State<PeminjamanCard> {
               child: ElevatedButton(
                 onPressed: () {
                   showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) => ConfirmActionPopup(
-                      title: "Pengembalian",
-                      message: "Anda akan mengembalikan pinjaman ini?",
-                      confirmText: "Ya",
-                      onConfirm: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  );
-                },
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => PengembalianPopup(
+                  data: data,
+                  onRefresh: widget.onRefresh,
+                ),
+              );
+            },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1155A2),
                   shape: RoundedRectangleBorder(

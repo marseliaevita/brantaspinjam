@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:brantaspinjam/services/peminjam_services.dart';
 import 'package:brantaspinjam/widgets/card_popup.dart';
 import 'package:brantaspinjam/widgets/card_alatpinjam.dart';
 import 'package:brantaspinjam/shared/enums.dart';
 
 class AlatPinjamForm extends StatefulWidget {
   final Map<String, dynamic> alat;
+  final VoidCallback? onRefresh;
 
-  const AlatPinjamForm({super.key, required this.alat});
+  const AlatPinjamForm({super.key, 
+  required this.alat,
+  this.onRefresh,});
 
   @override
   State<AlatPinjamForm> createState() => _AlatPinjamFormState();
@@ -80,21 +84,36 @@ class _AlatPinjamFormState extends State<AlatPinjamForm> {
   }
 
 
-  void _submit() {
-    if (tanggalPinjamCtrl.text.isEmpty || tanggalKembaliCtrl.text.isEmpty) {
-      return;
-    }
-
-    final payload = {
-      "id_alat": widget.alat["id"],
-      "jumlah": jumlah,
-      "tanggal_pinjam": tanggalPinjamCtrl.text,
-      "tanggal_kembali": tanggalKembaliCtrl.text,
-    };
-
-
-    Navigator.pop(context);
+ void _submit() async {
+  if (tanggalPinjamCtrl.text.isEmpty || tanggalKembaliCtrl.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Tanggal peminjaman dan pengembalian wajib diisi")),
+    );
+    return;
   }
+
+  final tanggalPinjam = DateTime.parse(tanggalPinjamCtrl.text);
+  final tanggalKembali = DateTime.parse(tanggalKembaliCtrl.text);
+
+  final berhasil = await ajukanPeminjaman(
+    idAlat: widget.alat["id"],
+    tanggalPinjam: tanggalPinjam,
+    tanggalKembali: tanggalKembali,
+  );
+
+  if (berhasil) {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Peminjaman berhasil diajukan')),
+    );
+    widget.onRefresh?.call(); 
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Gagal mengajukan peminjaman')),
+    );
+  }
+}
+
 }
 
 Widget _label(String text) {

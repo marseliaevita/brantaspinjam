@@ -113,6 +113,7 @@ class _PengembalianPetugasScreenState
                 return PeminjamanCard(
                   mode: CardMode.petugas,
                   data: e, 
+                  onRefresh: _initFetch,
                 );
               }).toList(),
             ),

@@ -22,13 +22,14 @@ Future<List<PeminjamanModel>> fetchPeminjamanAdmin() async {
         .order('tanggal_pinjam', ascending: false);
 
     return (rawData as List).map((e) {
-
-      final pengembalian = (e['pengembalian'] as List).isNotEmpty 
-          ? e['pengembalian'][0] 
+  final pengembalian =
+      e['pengembalian'] is Map<String, dynamic>
+          ? e['pengembalian']
           : null;
-          
-      return PeminjamanModel.fromMap(e, extraData: pengembalian);
-    }).toList();
+
+  return PeminjamanModel.fromMap(e, extraData: pengembalian);
+}).toList();
+
   } catch (e) {
     print('Error: $e');
     return [];
@@ -55,12 +56,14 @@ Future<List<PeminjamanModel>> fetchPengembalianAdmin() async {
         .order('tanggal_pinjam', ascending: false);
 
     return (rawData as List).map((e) {
-      final pengembalian = (e['pengembalian'] as List).isNotEmpty 
-          ? e['pengembalian'][0] 
+  final pengembalian =
+      e['pengembalian'] is Map<String, dynamic>
+          ? e['pengembalian']
           : null;
-          
-      return PeminjamanModel.fromMap(e, extraData: pengembalian);
-    }).toList();
+
+  return PeminjamanModel.fromMap(e, extraData: pengembalian);
+}).toList();
+
   } catch (e) {
     print('Error Fetching Pengembalian: $e');
     return [];
@@ -90,17 +93,43 @@ Future<List<PeminjamanModel>> fetchPeminjamanUser() async {
         .order('tanggal_pinjam', ascending: false);
 
     return (rawData as List).map((e) {
-      final pengembalian = (e['pengembalian'] as List).isNotEmpty 
-          ? e['pengembalian'][0] 
+  final pengembalian =
+      e['pengembalian'] is Map<String, dynamic>
+          ? e['pengembalian']
           : null;
-          
-      return PeminjamanModel.fromMap(e, extraData: pengembalian);
-    }).toList();
+
+  return PeminjamanModel.fromMap(e, extraData: pengembalian);
+}).toList();
+
   } catch (e) {
     print('Error Fetching User Peminjaman: $e');
     return [];
   }
 }
+
+//delete--trouble
+Future<void> deletePeminjaman(int idPeminjaman) async {
+  final supabase = Supabase.instance.client;
+
+  print('DELETE SERVICE ID: $idPeminjaman');
+
+  await supabase
+      .from('pengembalian')
+      .delete()
+      .eq('id_peminjaman', idPeminjaman);
+
+  final res = await supabase
+      .from('peminjaman')
+      .delete()
+      .eq('id_peminjaman', idPeminjaman)
+      .select();
+
+  print('DELETE RESULT: $res');
+}
+
+
+
+
 
 //denda
 Future<Map<String, dynamic>> fetchSettingDenda() async {

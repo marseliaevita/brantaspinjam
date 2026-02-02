@@ -127,8 +127,9 @@ class _PeminjamanPetugasScreenState extends State<PeminjamanPetugasScreen> {
                       itemBuilder: (_, index) {
                         final item = filteredData[index];
                         return PeminjamanCard(
-                          data: item,
                           mode: CardMode.petugas,
+                          data: item,
+                          onRefresh: _loadData,
                         );
                       },
                     ),

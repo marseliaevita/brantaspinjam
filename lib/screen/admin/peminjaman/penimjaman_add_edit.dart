@@ -112,23 +112,20 @@ Future<void> _fetchSemuaDataDenda() async {
     final allDenda = await service.getDenda();
 
     setState(() {
-      // 1. Ambil Tarif Terlambat Langsung dari Database
       final dendaTerlambatRow = allDenda.firstWhere(
         (e) => e['jenis_denda'].toString().toLowerCase().contains('terlambat'),
         orElse: () => {'tarif': 0}, 
       );
       tarifDendaTerlambat = (dendaTerlambatRow['tarif'] as num).toInt();
 
-      // 2. Filter List Kerusakan
       listDendaKerusakan = allDenda
           .where((e) => !e['jenis_denda'].toString().toLowerCase().contains('terlambat'))
           .toList();
 
-      // 3. SET DATA EDIT (Solusi Error Argument Type)
       if (isEdit) {
         final currentIdDenda = widget.data?.idDenda;
         if (currentIdDenda != null) {
-          // Gunakan .where untuk mencari agar lebih aman dari error non-nullable
+         
           final match = listDendaKerusakan.where((item) => item['id_denda'] == currentIdDenda);
           if (match.isNotEmpty) {
             dendaKerusakanTerpilih = match.first;
@@ -169,7 +166,6 @@ Future<void> _fetchSemuaDataDenda() async {
   }
 
   void _updateTotalKeseluruhan() {
-  // Ambil tarif dari Map dendaKerusakanTerpilih (Hasil Fetch DB)
   int tarifKerusakan = 0;
   if (dendaKerusakanTerpilih != null) {
     tarifKerusakan = (dendaKerusakanTerpilih!['tarif'] as num).toInt();
@@ -438,45 +434,69 @@ Future<void> _fetchSemuaDataDenda() async {
   try {
     final client = Supabase.instance.client;
 
-    // A. DATA UNTUK TABEL PEMINJAMAN
+    if (selectedUserId == null || selectedAlatId == null) {
+      throw "User dan alat wajib dipilih";
+    }
+
+    // DATA PEMINJAMAN
     final dataPeminjaman = {
       'user_id': selectedUserId,
       'id_alat': selectedAlatId,
       'status_peminjaman': statusValue.name,
-      'tanggal_pinjam': _df.parse(tanggalPinjamController.text).toIso8601String(),
-      'tanggal_kembali': _df.parse(tanggalBatasController.text).toIso8601String(),
+      'tanggal_pinjam':
+          _df.parse(tanggalPinjamController.text).toIso8601String(),
+      'tanggal_kembali':
+          _df.parse(tanggalBatasController.text).toIso8601String(),
     };
 
+    int idPeminjaman;
+  //pinjam
     if (isEdit) {
-  final int? targetId = widget.data?.idDenda; // Ambil ke variabel lokal
-  if (targetId != null) {
-    // Filter dulu, baru ambil yang pertama
-    final matches = listDendaKerusakan.where((item) => item['id_denda'] == targetId);
-    if (matches.isNotEmpty) {
-      setState(() {
-        dendaKerusakanTerpilih = matches.first;
-      });
+      idPeminjaman = widget.data!.idPeminjaman!;
+
+      await client
+          .from('peminjaman')
+          .update(dataPeminjaman)
+          .eq('id_peminjaman', idPeminjaman);
+    } else {
+      final res = await client
+          .from('peminjaman')
+          .insert(dataPeminjaman)
+          .select('id_peminjaman')
+          .single();
+
+      idPeminjaman = res['id_peminjaman'];
     }
+  //pengembalian
+   if ((statusValue == PeminjamanStatus.dikembalikan ||
+     statusValue == PeminjamanStatus.selesai)) {
+
+  if (tanggalDikembalikanController.text.isEmpty) {
+    throw "Tanggal dikembalikan wajib diisi";
+  }
+
+  await client.from('pengembalian').upsert({
+    'id_peminjaman': idPeminjaman,
+    'tanggal_dikembalikan':
+        _df.parse(tanggalDikembalikanController.text).toIso8601String(),
+    'kondisi_alat': kondisiController.text,
+    'id_denda': dendaKerusakanTerpilih?['id_denda'],
+    'total_denda': totalDendaKeseluruhan,
+    'terlambat': hasilHitungDendaTerlambat > 0,
+  }, onConflict: 'id_peminjaman');
+}
+
+
+    Navigator.pop(context, true);
+  } catch (e, s) {
+    debugPrint("ERROR SUBMIT: $e");
+    debugPrintStack(stackTrace: s);
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Error: $e")));
   }
 }
 
-    // B. DATA UNTUK TABEL PENGEMBALIAN (Jika Status Selesai)
-    if (statusValue == PeminjamanStatus.selesai || statusValue == PeminjamanStatus.dikembalikan) {
-      await client.from('pengembalian').upsert({
-        'id_peminjaman': widget.data!.idPeminjaman,
-        'tanggal_dikembalikan': _df.parse(tanggalDikembalikanController.text).toIso8601String(),
-        'kondisi_alat': kondisiController.text,
-        'id_denda': dendaKerusakanTerpilih?['id_denda'], // ID denda dari dropdown
-        'total_denda': totalDendaKeseluruhan,
-        'terlambat': hasilHitungDendaTerlambat > 0,
-      }, onConflict: 'id_peminjaman'); 
-    }
-
-    Navigator.pop(context, true); // Tutup popup dan refresh halaman
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-  }
-}
 
   Widget _label(String text) {
     return Padding(

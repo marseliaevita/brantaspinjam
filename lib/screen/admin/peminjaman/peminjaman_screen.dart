@@ -18,7 +18,6 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
   PeminjamanStatus? selectedStatus;
   List<PeminjamanModel> dataPeminjaman = [];
   bool isLoading = true;
-  
 
   @override
   void initState() {
@@ -145,7 +144,11 @@ class _PeminjamanAdminScreenState extends State<PeminjamanAdminScreen> {
                     itemCount: filteredData.length,
                     itemBuilder: (_, index) {
                       final item = filteredData[index];
-                      return PeminjamanCard(mode: CardMode.admin, data: item);
+                      return PeminjamanCard(
+                        mode: CardMode.admin,
+                        data: item,
+                        onRefresh: _loadPeminjaman,
+                      );
                     },
                   ),
           ),
