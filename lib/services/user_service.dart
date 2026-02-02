@@ -31,7 +31,7 @@ class UserService {
     }
   }
 
-  /// AMBIL SEMUA USER (
+  /// AMBIL SEMUA USER 
   Future<List<Map<String, dynamic>>> getAllUsers() async {
     final user = _client.auth.currentUser;
 
@@ -111,6 +111,26 @@ Future<void> updateUser(
         .select(); 
   } catch (e) {
     print("Error di updateUser: $e");
+    rethrow;
+  }
+}
+
+//LOG
+Future<List<Map<String, dynamic>>> getLogs() async {
+  try {
+    final res = await _client
+        .from('log_aktivitas')
+        .select('''
+          id_log,
+          aktivitas,
+          waktu,
+          users ( name )
+        ''') 
+        .order('waktu', ascending: false);
+
+    return List<Map<String, dynamic>>.from(res);
+  } catch (e) {
+    print("Error getLogs: $e");
     rethrow;
   }
 }

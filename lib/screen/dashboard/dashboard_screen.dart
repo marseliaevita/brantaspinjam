@@ -1,41 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:brantaspinjam/widgets/card_dashboard.dart';
-import 'package:brantaspinjam/shared/enums.dart'; 
+import 'package:brantaspinjam/shared/enums.dart';
+import 'package:brantaspinjam/services/dashboard_service.dart';
+import 'package:brantaspinjam/services/user_service.dart';
+import 'package:brantaspinjam/services/supabase_config.dart';
+import 'package:intl/intl.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final UserRole role;
+  const DashboardScreen({super.key, required this.role});
 
-  const DashboardScreen({
-    super.key,
-    required this.role,
-  });
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _isLoading = true;
+  Map<String, String> _stats = {};
+  List<Map<String, dynamic>> _listData = []; 
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = SupabaseConfig.client.auth.currentUser?.id ?? '';
+      final dService = DashboardService();
+      final uService = UserService();
+
+      
+      final results = await Future.wait([
+        dService.getStats(widget.role.name, userId),
+        widget.role == UserRole.peminjam 
+            ? dService.getMyLoans(userId) 
+            : uService.getLogs(),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _stats = Map<String, String>.from(results[0] as Map);
+          _listData = results[1] as List<Map<String, dynamic>>;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Gagal memuat dashboard: $e");
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
-          // ADMIN 
-          if (role == UserRole.admin) ...[
-            Wrap(
-              spacing: 15,
-              runSpacing: 15,
-              children: const [
-                DashboardCard(icon: Icons.inventory_2, title: "Alat", value: "11"),
-                DashboardCard(icon: Icons.people, title: "Pengguna", value: "8"),
-                DashboardCard(icon: Icons.category, title: "Kategori", value: "5"),
-                DashboardCard(icon: Icons.assignment, title: "Peminjaman", value: "10"),
-              ],
-            ),
-
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStatCards(),
             const SizedBox(height: 24),
-
-            const Text(
-              "Aktivitas",
-              style: TextStyle(
+            
+            Text(
+              widget.role == UserRole.peminjam ? "Pinjaman Saya" : "Aktivitas Terbaru",
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF4B4376),
@@ -43,107 +80,61 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            const ActivityCard(
-              title: "Pinjam",
-              subtitle: "Egi Dwi / Peminjam",
-              date: "19/1/2026",
-            ),
-          ],
+            _listData.isEmpty
+                ? const Center(child: Text("Belum ada data"))
+                : ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _listData.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final item = _listData[index];
 
-          // PETUGAS 
-          if (role == UserRole.petugas) ...[
-            Wrap(
-              spacing: 15,
-              runSpacing: 15,
-              children: const [
-                DashboardCard(icon: Icons.assignment, title: "Pengajuan", value: "6"),
-                DashboardCard(icon: Icons.inventory, title: "Dipinjam", value: "4"),
-                DashboardCard(icon: Icons.assignment_turned_in, title: "Kembali", value: "3"),
-                DashboardCard(icon: Icons.warning, title: "Terlambat", value: "1"),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Aktivitas",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF4B4376),
+                      if (widget.role == UserRole.peminjam) {
+                        return ActivityCard(
+                          title: item['alat']['nama_alat'] ?? 'Alat Tidak Diketahui',
+                          subtitle: "Status: ${item['status_peminjaman'].toString().toUpperCase()}",
+                          date: DateFormat('dd/MM/yyyy').format(DateTime.parse(item['tanggal_pinjam'])),
+                        );
+                      } else {
+                        return ActivityCard(
+                          title: item['users'] != null ? item['users']['name'] : 'Sistem',
+                          subtitle: item['aktivitas'] ?? '',
+                          date: DateFormat('dd/MM/yyyy').format(DateTime.parse(item['waktu'])),
+                        );
+                      }
+                    },
                   ),
-                ),
-
-                SizedBox(
-                  width: 112,
-                  height: 42,
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8294C4),
-                      side: const BorderSide(color: Color(0xFF4B4376)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      "Cetak",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            const ActivityCard(
-              title: "Mengajukan Peminjaman",
-              subtitle: "Mobil Toko / Peminjam",
-              date: "19/1/2026",
-            ),
           ],
-
-          // PEMINJAM 
-          if (role == UserRole.peminjam) ...[
-            Wrap(
-              spacing: 15,
-              runSpacing: 15,
-              children: const [
-                DashboardCard(icon: Icons.assignment, title: "Pengajuan", value: "2"),
-                DashboardCard(icon: Icons.inventory, title: "Dipinjam", value: "1"),
-                DashboardCard(icon: Icons.warning, title: "Terlambat", value: "0"),
-                DashboardCard(icon: Icons.check_circle, title: "Selesai", value: "5"),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            const Text(
-              "Aktivitas",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF4B4376),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            const ActivityCard(
-              title: "Dipinjam",
-              subtitle: "Laptop Asus",
-              date: "19/1/2026",
-            ),
-          ],
-        ],
+        ),
       ),
     );
+  }
+
+  Widget _buildStatCards() {
+    List<DashboardCard> cards = [];
+    if (widget.role == UserRole.admin) {
+      cards = [
+        DashboardCard(icon: Icons.inventory_2, title: "Alat", value: _stats['alat'] ?? "0"),
+        DashboardCard(icon: Icons.people, title: "Pengguna", value: _stats['users'] ?? "0"),
+        DashboardCard(icon: Icons.category, title: "Kategori", value: _stats['kategori'] ?? "0"),
+        DashboardCard(icon: Icons.assignment, title: "Peminjaman", value: _stats['pinjam'] ?? "0"),
+      ];
+    } else if (widget.role == UserRole.petugas) {
+      cards = [
+        DashboardCard(icon: Icons.assignment, title: "Pengajuan", value: _stats['pengajuan'] ?? "0"),
+        DashboardCard(icon: Icons.inventory, title: "Dipinjam", value: _stats['dipinjam'] ?? "0"),
+        DashboardCard(icon: Icons.assignment_turned_in, title: "Kembali", value: _stats['kembali'] ?? "0"),
+        DashboardCard(icon: Icons.warning, title: "Terlambat", value: _stats['terlambat'] ?? "0"),
+      ];
+    } else {
+      cards = [
+        DashboardCard(icon: Icons.assignment, title: "Pengajuan", value: _stats['pengajuan'] ?? "0"),
+        DashboardCard(icon: Icons.inventory, title: "Dipinjam", value: _stats['dipinjam'] ?? "0"),
+        DashboardCard(icon: Icons.warning, title: "Terlambat", value: _stats['terlambat'] ?? "0"),
+        DashboardCard(icon: Icons.check_circle, title: "Selesai", value: _stats['selesai'] ?? "0"),
+      ];
+    }
+    return Wrap(spacing: 15, runSpacing: 15, children: cards);
   }
 }
