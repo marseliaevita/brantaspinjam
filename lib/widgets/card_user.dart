@@ -5,6 +5,7 @@ class CardUser extends StatelessWidget {
   final String role;
   final VoidCallback? onEdit;
   final VoidCallback? onDisable;
+  final bool isActive;
 
   const CardUser({
     super.key,
@@ -12,10 +13,15 @@ class CardUser extends StatelessWidget {
     required this.role,
     this.onEdit,
     this.onDisable,
+    this.isActive = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color mainColor = isActive ? const Color(0xFF0E0A26) : Colors.grey;
+    final Color cardBg = isActive
+        ? const Color(0xFFDBDFEA).withOpacity(0.5)
+        : Colors.grey.withOpacity(0.2);
     return Stack(
       children: [
         // MAIN CARD
@@ -23,12 +29,9 @@ class CardUser extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 18),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFDBDFEA).withOpacity(0.5),
+            color: cardBg,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFF0E0A26),
-              width: 1,
-            ),
+            border: Border.all(color: mainColor, width: 1),
           ),
           child: Row(
             children: [
@@ -43,10 +46,10 @@ class CardUser extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   name.isNotEmpty ? name[0].toUpperCase() : "",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0E0A26),
+                    color: mainColor,
                   ),
                 ),
               ),
@@ -61,19 +64,19 @@ class CardUser extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF0E0A26),
+                        color: mainColor,
                       ),
                     ),
+
                     const SizedBox(height: 4),
                     Text(
-                      role,
+                      isActive ? role : "$role (Nonaktif)",
                       style: TextStyle(
                         fontSize: 20,
-                        color:
-                            const Color(0xFF0E0A26).withOpacity(0.7),
+                        color: mainColor.withOpacity(0.7),
                       ),
                     ),
                   ],
@@ -83,7 +86,7 @@ class CardUser extends StatelessWidget {
           ),
         ),
 
-        // EDIT 
+        // EDIT
         if (onEdit != null)
           Positioned(
             top: 20,
@@ -94,7 +97,7 @@ class CardUser extends StatelessWidget {
             ),
           ),
 
-        // DISABLE 
+        // DISABLE
         if (onDisable != null)
           Positioned(
             top: 20,
@@ -120,10 +123,6 @@ Widget _iconCircle(IconData icon) {
       color: Colors.white,
       shape: BoxShape.circle,
     ),
-    child: Icon(
-      icon,
-      size: 20,
-      color: Color(0xFF0E0A26),
-    ),
+    child: Icon(icon, size: 20, color: Color(0xFF0E0A26)),
   );
 }

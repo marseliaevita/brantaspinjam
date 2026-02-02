@@ -59,11 +59,17 @@ class _UserScreenState extends State<UserScreen> {
           // ADD
           AddButtonCard(
             title: "Tambah User",
-            onTap: () {
-              showDialog(context: context, builder: (_) => const UserAddEdit());
+            onTap: () async {
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (_) => const UserAddEdit(),
+              );
+
+              if (result == true) {
+                loadUsers();
+              }
             },
           ),
-
           const SizedBox(height: 16),
 
           // LIST
@@ -74,20 +80,26 @@ class _UserScreenState extends State<UserScreen> {
                     itemCount: filteredUser.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                     final user = filteredUser[index];
+                      final user = filteredUser[index];
 
                       return CardUser(
                         name: user['name'] ?? '-',
                         role: user['role'],
-                        //EDIT
-                        onEdit: () {
-                          showDialog(
+                        isActive: user['is_active'] ?? true,
+
+                        // EDIT
+                        onEdit: () async {
+                          final result = await showDialog<bool>(
                             context: context,
                             builder: (_) => UserAddEdit(user: user),
                           );
+
+                          if (result == true) {
+                            loadUsers();
+                          }
                         },
 
-                        //DISABLE
+                        // DISABLE / NONAKTIFKAN
                         onDisable: () {
                           showDialog(
                             context: context,
@@ -95,7 +107,27 @@ class _UserScreenState extends State<UserScreen> {
                               title: "Nonaktifkan Akun",
                               message: "Anda yakin menonaktifkan akun ini?",
                               confirmText: "Nonaktifkan",
-                              onConfirm: () {},
+                              onConfirm: () async {
+                                try {
+                                  await UserService().deactivateUser(
+                                    user['user_id'],
+                                  );
+
+                                  if (context.mounted) Navigator.pop(context);
+
+                                  loadUsers();
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Akun berhasil dinonaktifkan",
+                                      ),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  print("Error nonaktifkan user: $e");
+                                }
+                              },
                             ),
                           );
                         },

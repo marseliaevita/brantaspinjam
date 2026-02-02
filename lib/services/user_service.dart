@@ -63,7 +63,6 @@ class UserService {
         .eq('user_id', userId);
   }
 
-  /// CREATE USER (ADMIN)
 /// CREATE USER (ADMIN)
   Future<void> createUser({
     required String email,
@@ -101,13 +100,18 @@ Future<void> updateUser(
   String name,
   String role,
 ) async {
-  await _client
-      .from('users')
-      .update({
-        'name': name,
-        'role': role,
-      })
-      .eq('user_id', userId);
+  try {
+    await _client
+        .from('users')
+        .update({
+          'name': name,
+          'role': role,
+        })
+        .eq('user_id', userId)
+        .select(); 
+  } catch (e) {
+    print("Error di updateUser: $e");
+    rethrow;
+  }
 }
-  
 }
