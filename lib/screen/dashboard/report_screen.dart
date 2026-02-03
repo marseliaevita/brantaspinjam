@@ -34,20 +34,29 @@ class ReportScreen {
                   'Tanggal Pinjam',
                   'Status',
                 ],
-                data: List.generate(data.length, (index) {
-                  final item = data[index];
-                  return [
-                    '${index + 1}',
-                    item['users']?['name'] ?? 'User',
-                    item['alat']?['nama_alat'] ?? 'Alat Tidak Diketahui',
-                    item['tanggal_pinjam'] != null
-                        ? DateFormat(
-                            'dd/MM/yyyy',
-                          ).format(DateTime.parse(item['tanggal_pinjam']))
-                        : '-',
-                    item['status_peminjaman']?.toString().toUpperCase() ?? '-',
-                  ];
-                }),
+data: List.generate(data.length, (index) {
+  final item = data[index];
+  
+  String formattedDate = '-';
+  final rawDate = item['tanggal_pinjam'];
+
+  if (rawDate != null && rawDate.toString().isNotEmpty) {
+    try {
+      final dateTime = DateTime.parse(rawDate.toString());
+      formattedDate = DateFormat('dd/MM/yyyy').format(dateTime);
+    } catch (e) {
+      formattedDate = rawDate.toString();
+    }
+  }
+
+  return [
+    '${index + 1}',
+    item['user_name']?.toString() ?? '-',      
+    item['alat_name']?.toString() ?? '-',     
+    formattedDate, 
+    item['status_peminjaman']?.toString().toUpperCase() ?? '-',
+  ];
+}),
               ),
             ],
           );

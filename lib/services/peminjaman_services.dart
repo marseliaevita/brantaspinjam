@@ -107,7 +107,7 @@ Future<List<PeminjamanModel>> fetchPeminjamanUser() async {
   }
 }
 
-//delete--trouble
+//delete
 Future<void> deletePeminjaman(int idPeminjaman) async {
   try {
     await supabase

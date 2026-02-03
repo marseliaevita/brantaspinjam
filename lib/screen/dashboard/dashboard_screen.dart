@@ -7,7 +7,6 @@ import 'package:brantaspinjam/screen/dashboard/report_screen.dart';
 import 'package:brantaspinjam/widgets/card_dashboard.dart';
 import 'package:brantaspinjam/services/supabase_config.dart';
 
-
 class DashboardScreen extends StatefulWidget {
   final UserRole role;
   const DashboardScreen({super.key, required this.role});
@@ -27,19 +26,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDashboardData();
   }
 
- void _cetakLaporan() async {
-  if (_listData.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Belum ada data untuk dicetak")),
+  void _cetakLaporan() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
-    return;
+
+    try {
+      final dService = DashboardService();
+      final dataLaporan = await dService.getLoansForReport();
+
+      if (mounted) Navigator.pop(context);
+
+      if (dataLaporan.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Tidak ada data peminjaman di database"),
+          ),
+        );
+        return;
+      }
+
+      await ReportScreen.generateReport(context, dataLaporan);
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      debugPrint("Error Cetak: $e");
+    }
   }
-
-  await ReportScreen.generateReport(context, _listData);
-}
-
-
-
 
   Future<void> _loadDashboardData() async {
     if (!mounted) return;
