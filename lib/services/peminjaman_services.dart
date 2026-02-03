@@ -109,25 +109,35 @@ Future<List<PeminjamanModel>> fetchPeminjamanUser() async {
 
 //delete--trouble
 Future<void> deletePeminjaman(int idPeminjaman) async {
-  final supabase = Supabase.instance.client;
+  try {
+    await supabase
+        .from('pengembalian')
+        .delete()
+        .eq('id_peminjaman', idPeminjaman);
 
-  print('DELETE SERVICE ID: $idPeminjaman');
+    await supabase
+        .from('peminjaman')
+        .delete()
+        .eq('id_peminjaman', idPeminjaman);
 
-  await supabase
-      .from('pengembalian')
-      .delete()
-      .eq('id_peminjaman', idPeminjaman);
-
-  final res = await supabase
-      .from('peminjaman')
-      .delete()
-      .eq('id_peminjaman', idPeminjaman)
-      .select();
-
-  print('DELETE RESULT: $res');
+    print('Peminjaman dan pengembalian terkait berhasil dihapus');
+  } catch (e) {
+    print('Error delete peminjaman: $e');
+  }
 }
 
+Future<void> deletePengembalian(int idPeminjaman) async {
+  try {
+    await supabase
+        .from('pengembalian')
+        .delete()
+        .eq('id_peminjaman', idPeminjaman);
 
+    print('Pengembalian berhasil dihapus');
+  } catch (e) {
+    print('Error delete pengembalian: $e');
+  }
+}
 
 
 

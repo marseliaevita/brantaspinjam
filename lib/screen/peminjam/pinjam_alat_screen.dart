@@ -6,13 +6,13 @@ import 'package:brantaspinjam/services/kategori_service.dart';
 import 'package:brantaspinjam/screen/peminjam/form_pinjam.dart';
 
 class PinjamAlatScreen extends StatefulWidget {
-  const PinjamAlatScreen ({super.key});
+  const PinjamAlatScreen({super.key});
 
   @override
-  State<PinjamAlatScreen > createState() => _PeminjamanListScreenState();
+  State<PinjamAlatScreen> createState() => _PeminjamanListScreenState();
 }
 
-class _PeminjamanListScreenState extends State<PinjamAlatScreen > {
+class _PeminjamanListScreenState extends State<PinjamAlatScreen> {
   String searchQuery = "";
   String selectedCategory = "Semua";
 
@@ -39,7 +39,9 @@ class _PeminjamanListScreenState extends State<PinjamAlatScreen > {
       final data = await kategoriService.getKategori();
       setState(() {
         kategoriList = data;
-        kategoriMap = {for (var k in data) k["id_kategori"]: k["nama_kategori"]};
+        kategoriMap = {
+          for (var k in data) k["id_kategori"]: k["nama_kategori"],
+        };
         kategoriNames = ["Semua", ...data.map((k) => k["nama_kategori"])];
       });
     } catch (e) {
@@ -52,13 +54,17 @@ class _PeminjamanListScreenState extends State<PinjamAlatScreen > {
       final data = await alatService.getAlat();
       setState(() {
         alatList.clear();
-        alatList.addAll(data.map((e) => {
+        alatList.addAll(
+          data.map(
+            (e) => {
               "id": e["id_alat"],
               "nama": e["nama_alat"],
               "kategori": kategoriMap[e["id_kategori"]] ?? "Lainnya",
               "stok": e["stok"],
               "gambar": e["gambar"] ?? "",
-            }));
+            },
+          ),
+        );
       });
     } catch (e) {
       print("Error load alat: $e");
@@ -68,8 +74,11 @@ class _PeminjamanListScreenState extends State<PinjamAlatScreen > {
   @override
   Widget build(BuildContext context) {
     final filtered = alatList.where((a) {
-      final namaMatch = a["nama"].toString().toLowerCase().contains(searchQuery.toLowerCase());
-      final kategoriMatch = selectedCategory == "Semua" || a["kategori"] == selectedCategory;
+      final namaMatch = a["nama"].toString().toLowerCase().contains(
+        searchQuery.toLowerCase(),
+      );
+      final kategoriMatch =
+          selectedCategory == "Semua" || a["kategori"] == selectedCategory;
       return namaMatch && kategoriMatch;
     }).toList();
 
@@ -118,9 +127,14 @@ class _PeminjamanListScreenState extends State<PinjamAlatScreen > {
                 return GestureDetector(
                   onTap: () => setState(() => selectedCategory = c),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: selected ? const Color(0xFF0E0A26) : const Color(0xFFDBDFEA),
+                      color: selected
+                          ? const Color(0xFF0E0A26)
+                          : const Color(0xFFDBDFEA),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -128,7 +142,9 @@ class _PeminjamanListScreenState extends State<PinjamAlatScreen > {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: selected ? Colors.white : const Color(0xFF4B4376),
+                        color: selected
+                            ? Colors.white
+                            : const Color(0xFF4B4376),
                       ),
                     ),
                   ),
@@ -151,14 +167,15 @@ class _PeminjamanListScreenState extends State<PinjamAlatScreen > {
                   kategori: alat["kategori"],
                   stok: alat["stok"],
                   gambar: alat["gambar"],
-                  onAjukan: () {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) =>AlatPinjamForm(alat: alat),
-  );
-},
-
+                  onAjukan: alat["stok"] > 0
+                      ? () {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => AlatPinjamForm(alat: alat),
+                          );
+                        }
+                      : null,
                 );
               },
             ),

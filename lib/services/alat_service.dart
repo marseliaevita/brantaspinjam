@@ -40,7 +40,7 @@ class AlatService {
     }
   }
 
-  // Tambah alat
+  // Tambah alat admin
   Future<void> addAlat({
     required String nama,
     required int idKategori,

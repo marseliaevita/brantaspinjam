@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:brantaspinjam/services/supabase_config.dart';
 
 class DashboardService {
@@ -58,22 +59,64 @@ class DashboardService {
   }
 
   
+Future<List<Map<String, dynamic>>> getPetugasActivities() async {
+  try {
+    final res = await _client
+        .from('peminjaman')
+        .select('''
+          id_peminjaman,
+          status_peminjaman,
+          created_at,
+          users ( name ),
+          alat ( nama_alat )
+        ''')
+        .order('created_at', ascending: false)
+        .limit(10);
+
+    return List<Map<String, dynamic>>.from(res);
+  } catch (e) {
+    print('Error getPetugasActivities: $e');
+    return [];
+  }
+}
+
 Future<List<Map<String, dynamic>>> getMyLoans(String userId) async {
   try {
     final res = await _client
         .from('peminjaman')
         .select('''
           id_peminjaman,
-          tanggal_pinjam,
           status_peminjaman,
+          tanggal_pinjam,
           alat ( nama_alat )
         ''')
         .eq('user_id', userId)
         .order('created_at', ascending: false)
-        .limit(5); 
+        .limit(5);
+
     return List<Map<String, dynamic>>.from(res);
   } catch (e) {
-    print("Error getMyLoans: $e");
+    print('Error getMyLoans: $e');
+    return [];
+  }
+}
+
+Future<List<Map<String, dynamic>>> getLoansForReport() async {
+  try {
+    final response = await _client
+        .from('peminjaman')
+        .select('''
+          id_peminjaman,
+          tanggal_pinjam,
+          status_peminjaman,
+          users:user_id(name),
+          alat:id_alat(nama_alat)
+        ''')
+        .order('tanggal_pinjam', ascending: true);
+
+    return List<Map<String, dynamic>>.from(response);
+  } catch (e) {
+    print('Exception getLoansForReport: $e');
     return [];
   }
 }

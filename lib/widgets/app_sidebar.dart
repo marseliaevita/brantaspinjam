@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:brantaspinjam/shared/enums.dart';
+import 'package:brantaspinjam/model/model_user.dart';
 
 class AppSidebar extends StatelessWidget {
   final UserRole role;
   final String activeMenu;
   final Function(String) onMenuTap;
+  final UserModel user;
 
   const AppSidebar({
     super.key,
     required this.role,
     required this.activeMenu,
     required this.onMenuTap,
+    required this.user,
   });
+
+  String getInitial() {
+    return user.name.isNotEmpty
+        ? user.name[0].toUpperCase()
+        : user.email[0].toUpperCase();
+  }
 
   static List<Map<String, dynamic>> getMenusByRoleStatic(UserRole role) {
     switch (role) {
@@ -19,28 +28,24 @@ class AppSidebar extends StatelessWidget {
         return [
           _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
           _menu(Icons.people_rounded, 'Pengguna', 'user'),
-          _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
-          _menu(Icons.inventory_2_rounded, 'Alat', 'alat'),
+          _menu(Icons.sync_alt_rounded, 'Peminjaman', 'peminjaman'),
+          _menu(Icons.handyman_rounded, 'Alat', 'alat'),
           _menu(Icons.category_rounded, 'Kategori', 'kategori'),
           _menu(Icons.payments_rounded, 'Denda', 'denda'),
-          _menu(Icons.receipt_long_rounded, 'Log Aktivitas', 'log'),
+          _menu(Icons.history, 'Log Aktivitas', 'log'),
           _menu(Icons.logout_rounded, 'Logout', 'logout'),
         ];
       case UserRole.petugas:
         return [
           _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
-          _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
-          _menu(
-            Icons.assignment_return_rounded,
-            'Pengembalian',
-            'pengembalian',
-          ),
+          _menu(Icons.playlist_add_rounded, 'Peminjaman', 'peminjaman'),
+          _menu(Icons.sync_alt_rounded,'Pengembalian', 'pengembalian', ),
           _menu(Icons.logout_rounded, 'Logout', 'logout'),
         ];
       case UserRole.peminjam:
         return [
           _menu(Icons.dashboard_rounded, 'Dashboard', 'dashboard'),
-          _menu(Icons.inventory_2_rounded, 'Peminjaman', 'peminjaman'),
+          _menu(Icons.playlist_add_rounded, 'Peminjaman', 'peminjaman'),
           _menu(Icons.list_alt_rounded, 'Pinjaman Saya', 'pinjaman_saya'),
           _menu(Icons.logout_rounded, 'Logout', 'logout'),
         ];
@@ -49,10 +54,6 @@ class AppSidebar extends StatelessWidget {
 
   static Map<String, dynamic> _menu(IconData icon, String title, String key) {
     return {'icon': icon, 'title': title, 'key': key};
-  }
-
-  String getInitial() {
-    return role.name[0].toUpperCase();
   }
 
   @override
@@ -97,14 +98,15 @@ class AppSidebar extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Dummy User',
-                          style: TextStyle(
+                        Text(
+                          user.name.isNotEmpty ? user.name : user.email,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             fontSize: 14,
                           ),
                         ),
+
                         const SizedBox(height: 2),
                         Text(
                           role.name.toUpperCase(),
@@ -146,8 +148,8 @@ class AppSidebar extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-      onMenuTap(menuKey); 
-    },
+        onMenuTap(menuKey);
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

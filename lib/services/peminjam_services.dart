@@ -33,16 +33,12 @@ Future<bool> ajukanPengembalian({
   required DateTime tanggalDikembalikan,
 }) async {
   try {
-    final response = await supabase.from('pengembalian').insert({
+    await supabase.from('pengembalian').insert({
       'id_peminjaman': idPeminjaman,
       'tanggal_dikembalikan': tanggalDikembalikan.toIso8601String(),
       'terlambat': false,
-      'kondisi_alat': null,
-      'id_denda': null,
-      'total_denda': 0,
     });
 
-    
     await supabase.from('peminjaman').update({
       'status_peminjaman': 'dikembalikan',
     }).eq('id_peminjaman', idPeminjaman);
