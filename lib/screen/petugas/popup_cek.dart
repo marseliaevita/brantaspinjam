@@ -35,7 +35,7 @@ class _PeminjamanCekPopupState extends State<PeminjamanCekPopup> {
     super.initState();
     _fetchDenda();
     kondisiController.text = widget.data.kondisi ?? '';
-    terlambatController.text = widget.data.dendaTerlambatHari.toString();
+
   }
 
   Future<void> _fetchDenda() async {
@@ -54,11 +54,29 @@ class _PeminjamanCekPopupState extends State<PeminjamanCekPopup> {
           .toList();
 
       setState(() {});
+      _hitungHariTerlambat();
       _hitungDenda();
     } catch (e) {
       debugPrint('Gagal fetch denda: $e');
     }
   }
+
+  void _hitungHariTerlambat() {
+  final data = widget.data;
+
+  if (data.tanggalDikembalikan == null) return;
+
+  final batas = data.tanggalBatas;
+  final kembali = data.tanggalDikembalikan!;
+
+  final selisih = kembali.difference(batas).inDays;
+
+  final hariTerlambat = selisih > 0 ? selisih : 0;
+
+  terlambatController.text = hariTerlambat.toString();
+  hasilHitungDendaTerlambat = hariTerlambat * tarifDendaTerlambat;
+}
+
 
   void _hitungDenda() {
     final terlambatHari = int.tryParse(terlambatController.text) ?? 0;
@@ -87,6 +105,7 @@ class _PeminjamanCekPopupState extends State<PeminjamanCekPopup> {
           idPeminjaman: widget.data.idPeminjaman!,
           kondisi: kondisiController.text,
           terlambatHari: int.tryParse(terlambatController.text) ?? 0,
+          tarifTerlambat: tarifDendaTerlambat,
           dendaKerusakan: dendaKerusakanTerpilih != null
               ? (dendaKerusakanTerpilih!['tarif'] as num).toInt()
               : 0,

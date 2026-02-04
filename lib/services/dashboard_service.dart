@@ -10,8 +10,12 @@ class DashboardService {
       if (role == 'admin') {
         final alat = await _client.from('alat').count(CountOption.exact);
         final users = await _client.from('users').count(CountOption.exact);
-        final kategori = await _client.from('kategori').count(CountOption.exact);
-        final pinjam = await _client.from('peminjaman').count(CountOption.exact);
+        final kategori = await _client
+            .from('kategori')
+            .count(CountOption.exact);
+        final pinjam = await _client
+            .from('peminjaman')
+            .count(CountOption.exact);
 
         return {
           'alat': alat.toString(),
@@ -19,84 +23,130 @@ class DashboardService {
           'kategori': kategori.toString(),
           'pinjam': pinjam.toString(),
         };
-      } 
+      }
       if (role == 'petugas') {
-      final pengajuan = await _client.from('peminjaman').count(CountOption.exact).eq('status_peminjaman', 'pengajuan');
-      final dipinjam = await _client.from('peminjaman').count(CountOption.exact).eq('status_peminjaman', 'dipinjam');
-      final kembali = await _client.from('peminjaman').count(CountOption.exact).eq('status_peminjaman', 'dikembalikan');
-      
-      final terlambat = await _client.from('peminjaman')
-          .count(CountOption.exact)
-          .eq('status_peminjaman', 'dipinjam')
-          .lt('tanggal_kembali', DateTime.now().toIso8601String());
+        final pengajuan = await _client
+            .from('peminjaman')
+            .count(CountOption.exact)
+            .eq('status_peminjaman', 'pengajuan');
+        final dipinjam = await _client
+            .from('peminjaman')
+            .count(CountOption.exact)
+            .eq('status_peminjaman', 'dipinjam');
+        final kembali = await _client
+            .from('peminjaman')
+            .count(CountOption.exact)
+            .eq('status_peminjaman', 'dikembalikan');
 
-      return {
-        'pengajuan': pengajuan.toString(),
-        'dipinjam': dipinjam.toString(),
-        'kembali': kembali.toString(),
-        'terlambat': terlambat.toString(),
-      };
+        final terlambat = await _client
+            .from('peminjaman')
+            .count(CountOption.exact)
+            .eq('status_peminjaman', 'dipinjam')
+            .lt('tanggal_kembali', DateTime.now().toIso8601String());
+
+        return {
+          'pengajuan': pengajuan.toString(),
+          'dipinjam': dipinjam.toString(),
+          'kembali': kembali.toString(),
+          'terlambat': terlambat.toString(),
+        };
+      }
+
+      if (role == 'peminjam') {
+        final pengajuan = await _client
+            .from('peminjaman')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .eq('status_peminjaman', 'pengajuan');
+        final dipinjam = await _client
+            .from('peminjaman')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .eq('status_peminjaman', 'dipinjam');
+        final terlambat = await _client
+            .from('peminjaman')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .eq('status_peminjaman', 'dipinjam')
+            .lt('tanggal_kembali', DateTime.now().toIso8601String());
+
+        final selesai = await _client
+            .from('peminjaman')
+            .count(CountOption.exact)
+            .eq('user_id', userId)
+            .eq('status_peminjaman', 'selesai');
+
+        return {
+          'pengajuan': pengajuan.toString(),
+          'dipinjam': dipinjam.toString(),
+          'terlambat': terlambat.toString(),
+          'selesai': selesai.toString(),
+        };
+      }
+
+      return {};
+    } catch (e) {
+      print("Error Dashboard Stats: $e");
+      return {};
     }
-
-    if (role == 'peminjam') {
-      final pengajuan = await _client.from('peminjaman').count(CountOption.exact).eq('user_id', userId).eq('status_peminjaman', 'pengajuan');
-      final dipinjam = await _client.from('peminjaman').count(CountOption.exact).eq('user_id', userId).eq('status_peminjaman', 'dipinjam');
-      final terlambat = await _client.from('peminjaman').count(CountOption.exact).eq('user_id', userId)
-          .eq('status_peminjaman', 'dipinjam')
-          .lt('tanggal_kembali', DateTime.now().toIso8601String());
-      
-      final selesai = await _client.from('peminjaman').count(CountOption.exact).eq('user_id', userId).eq('status_peminjaman', 'selesai');
-
-      return {
-        'pengajuan': pengajuan.toString(),
-        'dipinjam': dipinjam.toString(),
-        'terlambat': terlambat.toString(),
-        'selesai': selesai.toString(),
-      };
-    }
-
-    return {};
-  } catch (e) {
-    print("Error Dashboard Stats: $e");
-    return {};
   }
-}
 
-//Log
-Future<List<Map<String, dynamic>>> getMyLoans(String userId) async {
-  try {
-    final res = await _client
-        .from('peminjaman')
-        .select('''
+  //Log
+  Future<List<Map<String, dynamic>>> getMyLoans(String userId) async {
+    try {
+      final res = await _client
+          .from('peminjaman')
+          .select('''
           id_peminjaman,
           status_peminjaman,
           tanggal_pinjam,
           alat ( nama_alat )
         ''')
-        .eq('user_id', userId)
-        .order('created_at', ascending: false)
-        .limit(5);
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(5);
 
-    return List<Map<String, dynamic>>.from(res);
-  } catch (e) {
-    print('Error getMyLoans: $e');
-    return [];
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      print('Error getMyLoans: $e');
+      return [];
+    }
   }
-}
 
-//Report
-Future<List<Map<String, dynamic>>> getLoansForReport() async {
-  try {
-    final response = await _client
-        .from('v_peminjaman_report') 
-        .select('*')
-        .order('tanggal_pinjam', ascending: false); 
+  //petugas
+  Future<List<Map<String, dynamic>>> getPeminjamanForPetugas() async {
+    try {
+      final res = await _client
+          .from('peminjaman')
+          .select('''
+          id_peminjaman,
+          status_peminjaman,
+          tanggal_pinjam,
+          user_id ( name ),
+          alat ( nama_alat )
+        ''')
+          .order('created_at', ascending: false)
+          .limit(5);
 
-    return List<Map<String, dynamic>>.from(response);
-  } catch (e) {
-    print('Error getLoansForReport: $e');
-    return [];
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      print('Error getPeminjamanForPetugas: $e');
+      return [];
+    }
   }
-}
 
+  //Report
+  Future<List<Map<String, dynamic>>> getLoansForReport() async {
+    try {
+      final response = await _client
+          .from('v_peminjaman_report')
+          .select('*')
+          .order('tanggal_pinjam', ascending: false);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error getLoansForReport: $e');
+      return [];
+    }
+  }
 }

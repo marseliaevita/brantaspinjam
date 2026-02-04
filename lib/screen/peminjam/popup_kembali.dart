@@ -39,8 +39,9 @@ class PengembalianPopup extends StatelessWidget {
                 : 'Gagal mengajukan pengembalian'),
           ),
         );
-
-        onRefresh?.call();
+        if (success && onRefresh != null) {
+    onRefresh!(); 
+  }
       },
       content: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),

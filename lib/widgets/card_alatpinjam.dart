@@ -99,34 +99,34 @@ class AlatPinjamCard extends StatelessWidget {
                 // JUMLAH (POPUP)
                 isPopup
                     ? Row(
-                        children: [
-                          _qtyButton(icon: Icons.remove, onTap: onKurang),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              (jumlah ?? 1).toString(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          _qtyButton(icon: Icons.add, onTap: onTambah),
-                        ],
+                        // children: [
+                        //   _qtyButton(icon: Icons.remove, onTap: onKurang),
+                        //   Padding(
+                        //     padding: const EdgeInsets.symmetric(horizontal: 10),
+                        //     child: Text(
+                        //       (jumlah ?? 1).toString(),
+                        //       style: const TextStyle(
+                        //         fontSize: 16,
+                        //         fontWeight: FontWeight.w600,
+                        //         color: Colors.white,
+                        //       ),
+                        //     ),
+                        //   ),
+                        //   _qtyButton(icon: Icons.add, onTap: onTambah),
+                        // ],
                       )
                     : Row(
                         children: [
                           _StockBadge(stok: stok),
                           const SizedBox(width: 8),
-                          Text(
-                            "Stok $stok",
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
+                          // Text(
+                          //   "Stok $stok",
+                          //   style: const TextStyle(
+                          //     fontSize: 15,
+                          //     fontWeight: FontWeight.w600,
+                          //     color: Colors.white,
+                          //   ),
+                          // ),
                         ],
                       ),
 

@@ -44,6 +44,7 @@ Future<bool> rejectPeminjaman(int idPeminjaman) async {
 Future<bool> cekPengembalian({
   required int idPeminjaman,
   required String kondisi,
+  required int tarifTerlambat,
   int terlambatHari = 0,
   int dendaKerusakan = 0,
   int? idDenda,

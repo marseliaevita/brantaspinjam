@@ -64,20 +64,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final dService = DashboardService();
       final uService = UserService();
 
+      late Future<List<Map<String, dynamic>>> dataFuture;
+
+      if (widget.role == UserRole.peminjam) {
+        dataFuture = dService.getMyLoans(userId);
+      } else if (widget.role == UserRole.petugas) {
+        dataFuture = dService.getPeminjamanForPetugas();
+      } else {
+        // Admin
+        dataFuture = uService.getLogs();
+      }
+
       final results = await Future.wait([
         dService.getStats(widget.role.name, userId),
-        widget.role == UserRole.peminjam
-            ? dService.getMyLoans(userId)
-            : uService.getLogs(),
+        dataFuture,
       ]);
 
-      if (mounted) {
-        setState(() {
-          _stats = Map<String, String>.from(results[0] as Map);
-          _listData = results[1] as List<Map<String, dynamic>>;
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+
+      setState(() {
+        _stats = Map<String, String>.from(results[0] as Map);
+        _listData = results[1] as List<Map<String, dynamic>>;
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint("Gagal memuat dashboard: $e");
       if (mounted) setState(() => _isLoading = false);
@@ -147,14 +156,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       if (widget.role == UserRole.petugas) {
                         return ActivityCard(
-                          title: item['users']?['name'] ?? 'User',
+                          title: item['user_id']?['name'] ?? 'User',
                           subtitle:
-                              "Status: ${item['status_peminjaman'].toString().toUpperCase()}",
-                          date: DateFormat(
-                            'dd/MM/yyyy HH:mm',
-                          ).format(DateTime.parse(item['waktu'])),
+                              "Status: ${(item['status_peminjaman'] ?? 'unknown').toString().toUpperCase()}",
+                          date: DateFormat('dd/MM/yyyy').format(
+                            DateTime.parse(
+                              item['tanggal_pinjam'] ??
+                                  DateTime.now().toIso8601String(),
+                            ),
+                          ),
                         );
                       }
+
                       if (widget.role == UserRole.peminjam) {
                         return ActivityCard(
                           title:

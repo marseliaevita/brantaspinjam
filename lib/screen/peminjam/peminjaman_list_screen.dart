@@ -129,6 +129,7 @@ class _PeminjamanListScreenState extends State<PeminjamanListScreen> {
                               return PeminjamanCard(
                                 data: item,
                                 mode: CardMode.peminjam,
+                                onRefresh: _getData,
                               );
                             },
                           ),

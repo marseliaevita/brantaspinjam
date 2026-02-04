@@ -33,11 +33,25 @@ Future<bool> ajukanPengembalian({
   required DateTime tanggalDikembalikan,
 }) async {
   try {
-    await supabase.from('pengembalian').insert({
-      'id_peminjaman': idPeminjaman,
-      'tanggal_dikembalikan': tanggalDikembalikan.toIso8601String(),
-      'terlambat': false,
-    });
+    final existing = await supabase
+        .from('pengembalian')
+        .select('id_pengembalian')
+        .eq('id_peminjaman', idPeminjaman)
+        .maybeSingle(); 
+
+    if (existing != null) {
+      await supabase.from('pengembalian').update({
+        'tanggal_dikembalikan': tanggalDikembalikan.toIso8601String(),
+        'terlambat': false,
+      }).eq('id_peminjaman', idPeminjaman);
+    } else {
+     
+      await supabase.from('pengembalian').insert({
+        'id_peminjaman': idPeminjaman,
+        'tanggal_dikembalikan': tanggalDikembalikan.toIso8601String(),
+        'terlambat': false,
+      });
+    }
 
     await supabase.from('peminjaman').update({
       'status_peminjaman': 'dikembalikan',

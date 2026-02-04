@@ -59,7 +59,7 @@ class _PeminjamanListScreenState extends State<PinjamAlatScreen> {
             (e) => {
               "id": e["id_alat"],
               "nama": e["nama_alat"],
-              "kategori": kategoriMap[e["id_kategori"]] ?? "Lainnya",
+              "kategori": kategoriMap[e["id_kategori"]] ?? " ",
               "stok": e["stok"],
               "gambar": e["gambar"] ?? "",
             },

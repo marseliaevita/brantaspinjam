@@ -19,6 +19,7 @@ class PeminjamanModel {
   final String? kondisi;
   final int? dendaTerlambatHari;
   final List<int>? dendaKerusakan;
+
   
 
   PeminjamanModel({

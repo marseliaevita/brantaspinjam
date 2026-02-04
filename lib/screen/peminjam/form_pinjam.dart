@@ -8,9 +8,11 @@ class AlatPinjamForm extends StatefulWidget {
   final Map<String, dynamic> alat;
   final VoidCallback? onRefresh;
 
-  const AlatPinjamForm({super.key, 
-  required this.alat,
-  this.onRefresh,});
+  const AlatPinjamForm({
+    super.key,
+    required this.alat,
+    this.onRefresh,
+  });
 
   @override
   State<AlatPinjamForm> createState() => _AlatPinjamFormState();
@@ -76,6 +78,19 @@ class _AlatPinjamFormState extends State<AlatPinjamForm> {
               context: context,
               label: 'Tanggal Pengembalian',
               controller: tanggalKembaliCtrl,
+              selectableDayPredicate: (day) {
+                if (tanggalPinjamCtrl.text.isEmpty) return true;
+
+                final tanggalPinjam = DateTime.parse(tanggalPinjamCtrl.text);
+
+                if (day.year == tanggalPinjam.year &&
+                    day.month == tanggalPinjam.month &&
+                    day.day == tanggalPinjam.day) return false;
+
+                if (day.isBefore(tanggalPinjam)) return false;
+
+                return true;
+              },
             ),
           ],
         ),
@@ -83,39 +98,39 @@ class _AlatPinjamFormState extends State<AlatPinjamForm> {
     );
   }
 
+  void _submit() async {
+    if (tanggalPinjamCtrl.text.isEmpty || tanggalKembaliCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Tanggal peminjaman dan pengembalian wajib diisi")),
+      );
+      return;
+    }
 
- void _submit() async {
-  if (tanggalPinjamCtrl.text.isEmpty || tanggalKembaliCtrl.text.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Tanggal peminjaman dan pengembalian wajib diisi")),
+    final tanggalPinjam = DateTime.parse(tanggalPinjamCtrl.text);
+    final tanggalKembali = DateTime.parse(tanggalKembaliCtrl.text);
+
+    final berhasil = await ajukanPeminjaman(
+      idAlat: widget.alat["id"],
+      tanggalPinjam: tanggalPinjam,
+      tanggalKembali: tanggalKembali,
     );
-    return;
-  }
 
-  final tanggalPinjam = DateTime.parse(tanggalPinjamCtrl.text);
-  final tanggalKembali = DateTime.parse(tanggalKembaliCtrl.text);
-
-  final berhasil = await ajukanPeminjaman(
-    idAlat: widget.alat["id"],
-    tanggalPinjam: tanggalPinjam,
-    tanggalKembali: tanggalKembali,
-  );
-
-  if (berhasil) {
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Peminjaman berhasil diajukan')),
-    );
-    widget.onRefresh?.call(); 
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Gagal mengajukan peminjaman')),
-    );
+    if (berhasil) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Peminjaman berhasil diajukan')),
+      );
+      widget.onRefresh?.call();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mengajukan peminjaman')),
+      );
+    }
   }
 }
 
-}
-
+// Label widget
 Widget _label(String text) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 6),
@@ -130,10 +145,12 @@ Widget _label(String text) {
   );
 }
 
+// Date input
 Widget _dateInput({
   required BuildContext context,
   required String label,
   required TextEditingController controller,
+  bool Function(DateTime)? selectableDayPredicate,
 }) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,11 +181,27 @@ Widget _dateInput({
             ),
           ),
           onTap: () async {
+            final firstDate = DateTime.now();
+            final lastDate = firstDate.add(const Duration(days: 365));
+
+            // Pastikan initialDate valid untuk predicate
+            DateTime initialDate = firstDate;
+            if (selectableDayPredicate != null) {
+              for (int i = 0; i <= 365; i++) {
+                final checkDate = firstDate.add(Duration(days: i));
+                if (selectableDayPredicate(checkDate)) {
+                  initialDate = checkDate;
+                  break;
+                }
+              }
+            }
+
             final date = await showDatePicker(
               context: context,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 365)),
-              initialDate: DateTime.now(),
+              firstDate: firstDate,
+              lastDate: lastDate,
+              initialDate: initialDate,
+              selectableDayPredicate: selectableDayPredicate,
             );
 
             if (date != null) {
